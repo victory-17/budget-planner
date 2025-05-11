@@ -61,13 +61,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
+      // Instead of using user_metadata, we'll use data option for profile information
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name: name || email.split('@')[0]
-          }
+          data: { name: name || email.split('@')[0] }
         }
       });
       
@@ -76,8 +75,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         toast({
           title: "Account created!",
-          description: "Your account has been successfully created. Please check your email for verification.",
+          description: "Your account has been successfully created.",
         });
+        
+        // Navigate after signup
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 0);
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -104,6 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       // Auth state change listener will handle navigation
+      toast({
+        title: "Welcome back!",
+        description: "You've been successfully logged in.",
+      });
     } catch (error: any) {
       console.error('Sign in error:', error);
       toast({
