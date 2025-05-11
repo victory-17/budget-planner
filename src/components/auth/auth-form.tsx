@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +40,8 @@ export function AuthForm({ type }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
-
+  const navigate = useNavigate();
+  
   const isSignIn = type === "signin";
   const schema = isSignIn ? loginSchema : signupSchema;
   
@@ -63,12 +64,23 @@ export function AuthForm({ type }: AuthFormProps) {
           title: "Welcome back!",
           description: "You've successfully signed in.",
         });
+        navigate("/dashboard");
       } else {
         await signUp(values.email, values.password, (values as any).name);
+        toast({
+          title: "Account created!",
+          description: "You've successfully signed up.",
+        });
+        navigate("/dashboard");
       }
     } catch (error: any) {
-      // Error handling is done in the auth provider
       console.error('Auth error:', error);
+      toast({
+        title: "Authentication Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
     }
   };

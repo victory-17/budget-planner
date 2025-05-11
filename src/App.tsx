@@ -32,10 +32,33 @@ const AuthRedirect = () => {
   const { isAuthenticated, loading } = useAuth();
   
   // Show loading state while checking auth
-  if (loading) return null;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-budget-green"></div>
+    </div>
+  );
   
   // Redirect based on auth status
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/signin" replace />;
+};
+
+// Public route component to redirect authenticated users away from auth pages
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-budget-green"></div>
+      </div>
+    );
+  }
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
 };
 
 const App = () => (
@@ -84,24 +107,5 @@ const App = () => (
     </BrowserRouter>
   </QueryClientProvider>
 );
-
-// Public route component to redirect authenticated users away from auth pages
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="loader"></span>
-      </div>
-    );
-  }
-  
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
 
 export default App;

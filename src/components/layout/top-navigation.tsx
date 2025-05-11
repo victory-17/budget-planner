@@ -6,7 +6,8 @@ import {
   Bell, 
   Share2, 
   Calendar, 
-  Download
+  Download,
+  LogOut
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useAuth } from "@/lib/providers/auth-provider";
 import { cn } from "@/lib/utils";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 interface TopNavigationProps {
   title: string;
@@ -23,7 +32,7 @@ interface TopNavigationProps {
 }
 
 export function TopNavigation({ title, subtitle }: TopNavigationProps) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchValue, setSearchValue] = useState("");
@@ -58,6 +67,10 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
     day: '2-digit',
     year: 'numeric'
   }) : 'Select date';
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className="border-b border-border bg-background py-4">
@@ -115,10 +128,25 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
                 <Share2 className="h-5 w-5" />
               </Button>
 
-              <Avatar className="h-9 w-9 cursor-pointer">
-                <AvatarImage src="" alt={user?.email || "User"} />
-                <AvatarFallback>{userInitials}</AvatarFallback>
-              </Avatar>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="h-9 w-9 cursor-pointer">
+                    <AvatarImage src="" alt={user?.email || "User"} />
+                    <AvatarFallback>{userInitials}</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/settings")}>
+                    Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

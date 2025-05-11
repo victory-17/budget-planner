@@ -126,6 +126,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       // Auth state change listener will handle navigation
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
     } catch (error: any) {
       console.error('Sign out error:', error);
       toast({
