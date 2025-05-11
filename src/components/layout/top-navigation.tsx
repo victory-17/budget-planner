@@ -45,8 +45,12 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
     navigate("/transactions/new");
   };
   
-  const userInitials = user?.name 
-    ? `${user.name.split(' ')[0][0]}${user.name.split(' ')[1]?.[0] || ''}`
+  // Safely get user display name from metadata or use email as fallback
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+  
+  // Generate user initials from name or email
+  const userInitials = userName 
+    ? userName.split(' ').map(part => part[0]?.toUpperCase()).slice(0, 2).join('')
     : user?.email?.[0].toUpperCase() || "U";
 
   const formattedDate = date ? date.toLocaleDateString('en-US', {
@@ -112,7 +116,7 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
               </Button>
 
               <Avatar className="h-9 w-9 cursor-pointer">
-                <AvatarImage src="" alt={user?.name || user?.email} />
+                <AvatarImage src="" alt={user?.email || "User"} />
                 <AvatarFallback>{userInitials}</AvatarFallback>
               </Avatar>
             </div>
