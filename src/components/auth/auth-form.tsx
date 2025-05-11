@@ -65,18 +65,10 @@ export function AuthForm({ type }: AuthFormProps) {
         });
       } else {
         await signUp(values.email, values.password, (values as any).name);
-        toast({
-          title: "Account created!",
-          description: "Your account has been successfully created.",
-        });
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
+      // Error handling is done in the auth provider
+      console.error('Auth error:', error);
       setIsLoading(false);
     }
   };
@@ -181,10 +173,6 @@ export function AuthForm({ type }: AuthFormProps) {
       
       <div className="text-center text-xs text-muted-foreground">
         <p>By continuing, you agree to our Terms of Service and Privacy Policy.</p>
-        <p className="mt-1">This is a demo application. No real authentication is performed yet.</p>
-        <p className="font-medium mt-2">
-          Connect to Supabase to enable real authentication and database functionality.
-        </p>
       </div>
     </div>
   );

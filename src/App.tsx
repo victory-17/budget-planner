@@ -9,6 +9,7 @@ import { AuthProvider } from "@/lib/providers/auth-provider";
 import { ThemeProvider } from "@/lib/providers/theme-provider";
 import { Layout } from "@/components/layout/layout";
 import { ProtectedRoute } from "@/lib/utils/protected-route";
+import { useAuth } from "@/lib/providers/auth-provider";
 
 // Auth Pages
 import SignIn from "./pages/auth/SignIn";
@@ -26,6 +27,17 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Redirect component based on authentication status
+const AuthRedirect = () => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  // Show loading state while checking auth
+  if (loading) return null;
+  
+  // Redirect based on auth status
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/signin" replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
@@ -35,12 +47,20 @@ const App = () => (
             <Toaster />
             <Sonner />
             <Routes>
-              {/* Redirect root to signin */}
-              <Route path="/" element={<Navigate to="/signin" replace />} />
+              {/* Redirect root to dashboard if authenticated, otherwise to signin */}
+              <Route path="/" element={<AuthRedirect />} />
               
-              {/* Auth routes */}
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
+              {/* Auth routes - accessible only when not logged in */}
+              <Route path="/signin" element={
+                <PublicRoute>
+                  <SignIn />
+                </PublicRoute>
+              } />
+              <Route path="/signup" element={
+                <PublicRoute>
+                  <SignUp />
+                </PublicRoute>
+              } />
               
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
@@ -64,5 +84,24 @@ const App = () => (
     </BrowserRouter>
   </QueryClientProvider>
 );
+
+// Public route component to redirect authenticated users away from auth pages
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="loader"></span>
+      </div>
+    );
+  }
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 export default App;

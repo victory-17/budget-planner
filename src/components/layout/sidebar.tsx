@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { SidebarModeToggle } from "@/components/mode-toggle";
@@ -50,11 +50,11 @@ export function Sidebar() {
   const { signOut } = useAuth();
 
   // Auto-collapse on mobile screens
-  useState(() => {
+  useEffect(() => {
     if (isMobile) {
       setIsCollapsed(true);
     }
-  });
+  }, [isMobile]);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
