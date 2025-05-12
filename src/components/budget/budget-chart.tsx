@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +35,7 @@ export function BudgetChart({ className }: BudgetChartProps) {
 
   const exportChartData = () => {
     console.log("Exporting chart data...");
-    // Placeholder: Connect to GET /api/charts/allocation-budget?period=${view}
+    // GET /api/charts/allocation-budget?period=monthly
   };
 
   return (

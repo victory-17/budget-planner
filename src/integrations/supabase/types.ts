@@ -9,7 +9,128 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          id: string
+          first_name: string | null
+          last_name: string | null
+          avatar_url: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id: string
+          first_name?: string | null
+          last_name?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          first_name?: string | null
+          last_name?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      accounts: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          type: string
+          balance: number
+          currency: string
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          type: string
+          balance: number
+          currency: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          type?: string
+          balance?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      transactions: {
+        Row: {
+          id: string
+          user_id: string
+          account_id: string
+          amount: number
+          type: string
+          category: string
+          description: string | null
+          date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          account_id: string
+          amount: number
+          type: string
+          category: string
+          description?: string | null
+          date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          account_id?: string
+          amount?: number
+          type?: string
+          category?: string
+          description?: string | null
+          date?: string
+          created_at?: string
+        }
+      }
+      budgets: {
+        Row: {
+          id: string
+          user_id: string
+          category: string
+          amount: number
+          period: string
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category: string
+          amount: number
+          period: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          category?: string
+          amount?: number
+          period?: string
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never

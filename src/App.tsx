@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,8 @@ import { useAuth } from "@/lib/providers/auth-provider";
 // Auth Pages
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
+import AuthCallback from "./pages/auth/callback";
+import DiagnoseAuth from "./pages/auth/DiagnoseAuth";
 
 // Main Pages
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -84,6 +85,12 @@ const App = () => (
                   <SignUp />
                 </PublicRoute>
               } />
+              
+              {/* Auth callback route - for processing auth redirects from Supabase */}
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              
+              {/* Diagnostic route - for testing Supabase connection */}
+              <Route path="/auth/diagnose" element={<DiagnoseAuth />} />
               
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>

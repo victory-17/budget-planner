@@ -2,10 +2,54 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+// Supabase project configuration
 const SUPABASE_URL = "https://kimfcqjzyehxxpxmjqdc.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbWZjcWp6eWVoeHhweG1qcWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2MDE0NzksImV4cCI6MjA2MTE3NzQ3OX0.y0jw-xLdePurKGUDvErz2xCxTJbWuwXO2n21KOpNHgs";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbWZjcWp6eWVoeHhweG1qcWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2MDE0NzksImV4cCI6MjA2MTE3NzQ3OX0.y0jw-xLdePurKGUDvErz2xCxTJbWuwXO2n21KOpNHgs";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// For development, enable debug mode
+const isDev = import.meta.env.DEV;
+
+// Create a Supabase client with appropriate configuration
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'x-application-name': 'budget-planner'
+    }
+  },
+  // Debug mode in development
+  ...(isDev && {
+    db: {
+      schema: 'public'
+    },
+    logger: {
+      debug: console.debug,
+      info: console.info,
+      warn: console.warn,
+      error: console.error
+    }
+  })
+});
+
+// Verify the client is properly initialized
+if (!supabase.auth) {
+  console.error('Supabase client failed to initialize properly. Check your API keys and configuration.');
+}
+
+// Test connection once on startup
+if (isDev) {
+  supabase.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.info('Supabase connection test successful');
+    }
+  });
+}

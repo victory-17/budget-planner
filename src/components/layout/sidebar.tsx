@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
@@ -16,7 +15,9 @@ import {
   HelpCircle, 
   LogOut, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  Sun,
+  Moon
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -24,16 +25,17 @@ interface SidebarLinkProps {
   icon: React.ReactNode;
   label: string;
   isCollapsed: boolean;
+  isActive?: boolean;
 }
 
-const SidebarLink = ({ to, icon, label, isCollapsed }: SidebarLinkProps) => {
+const SidebarLink = ({ to, icon, label, isCollapsed, isActive }: SidebarLinkProps) => {
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
+      className={({ isActive: routeIsActive }) =>
         cn(
           "flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "",
+          (isActive || routeIsActive) ? "bg-sidebar-accent text-sidebar-accent-foreground" : "",
           isCollapsed ? "justify-center" : ""
         )
       }
@@ -119,6 +121,7 @@ export function Sidebar() {
             icon={<Wallet2 className="h-5 w-5" />}
             label="Budgets"
             isCollapsed={isCollapsed}
+            isActive={true}
           />
           <SidebarLink
             to="/reports"
@@ -157,8 +160,16 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="px-3 py-4 border-t border-sidebar-border mt-auto">
+      <div className="px-3 py-4 border-t border-sidebar-border">
         {!isCollapsed && <SidebarModeToggle />}
+        {isCollapsed && (
+          <div className="flex justify-center">
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </Button>
+          </div>
+        )}
       </div>
     </aside>
   );

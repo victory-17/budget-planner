@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +15,8 @@ export function RunningBudget({ className }: RunningBudgetProps) {
   const totalSpent = 35.0;
   const totalIncome = 60.0;
   const percentage = Math.min(100, Math.round((totalSpent / budgetAmount) * 100));
+  
+  // GET /api/budget/summary
   
   const categories = [
     {
@@ -37,6 +38,8 @@ export function RunningBudget({ className }: RunningBudgetProps) {
       percentage: 63,
     },
   ];
+  
+  // GET /api/budget/categories?summary=true
 
   return (
     <Card className={className}>
@@ -83,7 +86,7 @@ export function RunningBudget({ className }: RunningBudgetProps) {
               <div className="text-xs uppercase font-medium text-muted-foreground mb-1">
                 {percentage < 75 ? "Still Safe" : "Near Limit"}
               </div>
-              <div className="text-3xl font-bold">${budgetAmount.toFixed(3)}</div>
+              <div className="text-3xl font-bold">${budgetAmount.toFixed(2)}</div>
               <div className="text-xs text-muted-foreground mt-1">
                 The amount that can be spent
               </div>
@@ -95,17 +98,17 @@ export function RunningBudget({ className }: RunningBudgetProps) {
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-primary"></span>
             <span>Budget</span>
-            <span className="font-medium">${budgetAmount.toFixed(3)}</span>
+            <span className="font-medium">${budgetAmount.toFixed(2)}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-budget-yellow"></span>
             <span>Expenditure</span>
-            <span className="font-medium">${totalSpent.toFixed(3)}</span>
+            <span className="font-medium">${totalSpent.toFixed(2)}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-budget-green"></span>
             <span>Income</span>
-            <span className="font-medium">${totalIncome.toFixed(3)}</span>
+            <span className="font-medium">${totalIncome.toFixed(2)}</span>
           </div>
         </div>
 
@@ -114,7 +117,7 @@ export function RunningBudget({ className }: RunningBudgetProps) {
             <div key={category.name} className="space-y-1">
               <div className="flex justify-between text-sm">
                 <div>{category.name}</div>
-                <div className="font-medium">${category.spent.toFixed(3)}</div>
+                <div className="font-medium">${category.spent.toFixed(2)}</div>
               </div>
               <Progress value={category.percentage} className="h-2" />
             </div>

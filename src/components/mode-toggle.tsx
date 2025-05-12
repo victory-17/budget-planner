@@ -1,4 +1,3 @@
-
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/lib/providers/theme-provider";
 import { Button } from "@/components/ui/button";
@@ -44,14 +43,24 @@ export function SidebarModeToggle() {
 
   return (
     <div 
-      className="flex items-center gap-2 cursor-pointer" 
+      className="flex items-center justify-between w-full cursor-pointer" 
       onClick={toggleTheme}
     >
-      <div className="flex items-center">
-        <div className="mr-2 text-sm font-medium">Light Mode</div>
-        <div className={`relative w-10 h-5 rounded-full transition-colors ${theme === "dark" ? "bg-sidebar-accent" : "bg-budget-green"}`}>
-          <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
-        </div>
+      <div className="flex items-center gap-2">
+        <Sun className="h-4 w-4" />
+        <span className="text-sm font-medium">Light</span>
+      </div>
+      <div className="relative w-10 h-5 rounded-full transition-colors bg-primary/20">
+        <div 
+          className={`
+            absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform 
+            ${theme === "dark" ? "translate-x-5 bg-primary" : "translate-x-0 bg-budget-green"}
+          `} 
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <Moon className="h-4 w-4" />
+        <span className="text-sm font-medium">Dark</span>
       </div>
     </div>
   );

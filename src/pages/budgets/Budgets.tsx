@@ -1,4 +1,3 @@
-
 import { ShoppingCart, Package, HomeIcon } from "lucide-react";
 import { TopNavigation } from "@/components/layout/top-navigation";
 import { SummaryCard } from "@/components/budget/summary-card";

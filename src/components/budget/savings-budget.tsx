@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -25,6 +24,8 @@ const mockSavings: SavingEntry[] = [
     amount: 445.00
   }
 ];
+
+// GET /api/savings
 
 interface SavingsBudgetProps {
   className?: string;

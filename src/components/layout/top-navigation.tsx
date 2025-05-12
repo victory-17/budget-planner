@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -7,7 +6,8 @@ import {
   Share2, 
   Calendar, 
   Download,
-  LogOut
+  LogOut,
+  Plus
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -117,7 +117,8 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
               </Button>
 
               <Button onClick={addPayment} className="bg-budget-green hover:bg-budget-green/90 text-white">
-                + Add Payment
+                <Plus className="h-4 w-4 mr-2" />
+                Add Payment
               </Button>
 
               <Button variant="ghost" size="icon" className="rounded-full">

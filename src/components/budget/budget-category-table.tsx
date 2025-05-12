@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Edit, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -46,6 +45,8 @@ const mockCategories = [
     status: "Over Budget",
   },
 ];
+
+// GET /api/budget/categories
 
 interface BudgetCategoryTableProps {
   className?: string;
@@ -96,7 +97,7 @@ export function BudgetCategoryTable({ className }: BudgetCategoryTableProps) {
           <table className="w-full">
             <thead>
               <tr className="text-xs text-left text-muted-foreground border-b">
-                <th className="font-medium py-3 px-2">Budget</th>
+                <th className="font-medium py-3 px-2">Category</th>
                 <th className="font-medium py-3 px-2">Monthly Limit</th>
                 <th className="font-medium py-3 px-2">Spent Today</th>
                 <th className="font-medium py-3 px-2">Remaining</th>
@@ -111,10 +112,10 @@ export function BudgetCategoryTable({ className }: BudgetCategoryTableProps) {
                   onClick={() => editCategory(category.id)}
                 >
                   <td className="py-3 px-2">{category.name}</td>
-                  <td className="py-3 px-2">${category.monthlyLimit.toFixed(3)}</td>
-                  <td className="py-3 px-2">${category.spentToday.toFixed(3)}</td>
+                  <td className="py-3 px-2">${category.monthlyLimit.toFixed(2)}</td>
+                  <td className="py-3 px-2">${category.spentToday.toFixed(2)}</td>
                   <td className="py-3 px-2">
-                    ${Math.abs(category.remaining).toFixed(3)}
+                    ${Math.abs(category.remaining).toFixed(2)}
                     {category.remaining < 0 && <span className="text-red-500"> (overspent)</span>}
                   </td>
                   <td className="py-3 px-2">

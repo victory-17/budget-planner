@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Wallet2 } from "lucide-react";
+import { Wallet2, Loader2, AlertTriangle, Wrench } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/providers/auth-provider";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -38,6 +38,8 @@ interface AuthFormProps {
 
 export function AuthForm({ type }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isConnectionError, setIsConnectionError] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -56,6 +58,8 @@ export function AuthForm({ type }: AuthFormProps) {
 
   const onSubmit = async (values: z.infer<typeof schema>) => {
     setIsLoading(true);
+    setErrorMessage(null);
+    setIsConnectionError(false);
     
     try {
       if (isSignIn) {
@@ -75,11 +79,18 @@ export function AuthForm({ type }: AuthFormProps) {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      toast({
-        title: "Authentication Error",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Handle specific error types
+      if (error.message.includes('API key') || error.message.includes('network') || error.message.includes('connection')) {
+        setIsConnectionError(true);
+        setErrorMessage("Authentication system connection error. Please try again or use the diagnostic tool.");
+      } else if (error.message.includes('User already registered')) {
+        setErrorMessage("This email is already registered. Please sign in instead.");
+      } else if (error.message.includes('Invalid login credentials')) {
+        setErrorMessage("Invalid email or password. Please try again.");
+      } else {
+        setErrorMessage(error.message || "Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +111,25 @@ export function AuthForm({ type }: AuthFormProps) {
             : "Enter your information to create a new account"}
         </p>
       </div>
+      
+      {errorMessage && (
+        <Alert variant="destructive" className="my-4">
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          <AlertDescription>{errorMessage}</AlertDescription>
+          
+          {isConnectionError && (
+            <div className="mt-2 flex justify-end">
+              <Link 
+                to="/auth/diagnose" 
+                className="flex items-center text-xs font-medium hover:underline"
+              >
+                <Wrench className="h-3 w-3 mr-1" />
+                Run Diagnostics
+              </Link>
+            </div>
+          )}
+        </Alert>
+      )}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -163,9 +193,16 @@ export function AuthForm({ type }: AuthFormProps) {
             />
           )}
           
-          <Button type="submit" className="w-full bg-budget-green hover:bg-budget-green/90" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-budget-green hover:bg-budget-green/90" 
+            disabled={isLoading}
+          >
             {isLoading ? (
-              <span className="loader"></span>
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isSignIn ? "Signing in..." : "Creating account..."}
+              </>
             ) : isSignIn ? "Sign in" : "Create account"}
           </Button>
         </form>
@@ -185,6 +222,15 @@ export function AuthForm({ type }: AuthFormProps) {
       
       <div className="text-center text-xs text-muted-foreground">
         <p>By continuing, you agree to our Terms of Service and Privacy Policy.</p>
+        <p className="mt-1">
+          <Link
+            to="/auth/diagnose"
+            className="text-budget-green hover:underline flex items-center justify-center mt-2"
+          >
+            <Wrench className="h-3 w-3 mr-1" />
+            Troubleshoot Connection
+          </Link>
+        </p>
       </div>
     </div>
   );
