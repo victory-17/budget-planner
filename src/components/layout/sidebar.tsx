@@ -35,7 +35,7 @@ const SidebarLink = ({ to, icon, label, isCollapsed, isActive }: SidebarLinkProp
       className={({ isActive: routeIsActive }) =>
         cn(
           "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          (isActive || routeIsActive) ? "bg-[#4E60FF]/10 text-[#4E60FF]" : "",
+          (isActive || routeIsActive) ? "bg-sidebar-primary/10 text-sidebar-primary" : "",
           isCollapsed ? "justify-center" : ""
         )
       }
@@ -64,23 +64,24 @@ export function Sidebar() {
 
   return (
     <aside
+      data-sidebar="sidebar"
       className={cn(
-        "flex flex-col bg-[#F9FAFB] border-r border-[#E0E0E0] h-screen transition-all duration-300 sticky top-0 left-0 shadow-sm",
+        "flex flex-col bg-sidebar border-r border-sidebar-border h-screen transition-all duration-300 sticky top-0 left-0 shadow-sm",
         isCollapsed ? "w-[70px]" : "w-[240px]"
       )}
     >
       <div className="flex items-center gap-2 px-3 h-16">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-[#4E60FF] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-md bg-[#5847eb] flex items-center justify-center">
               <Wallet2 className="text-white h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold text-[#212B36]">Budget Planner</span>
+            <span className="text-lg font-semibold text-sidebar-foreground">Budget Planner</span>
           </div>
         )}
         {isCollapsed && (
           <div className="w-full flex justify-center">
-            <div className="w-8 h-8 rounded-md bg-[#4E60FF] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-md bg-[#5847eb] flex items-center justify-center">
               <Wallet2 className="text-white h-5 w-5" />
             </div>
           </div>
@@ -96,7 +97,7 @@ export function Sidebar() {
       </div>
 
       <div className="px-3 py-4">
-        {!isCollapsed && <p className="text-xs font-semibold text-[#637381] mb-2">GENERAL MENU</p>}
+        {!isCollapsed && <p data-sidebar="group-label" className="text-xs font-semibold text-sidebar-foreground/70 mb-2">GENERAL MENU</p>}
         <nav className="flex flex-col gap-1">
           <SidebarLink
             to="/dashboard"
@@ -126,7 +127,7 @@ export function Sidebar() {
       </div>
 
       <div className="px-3 py-4 mt-auto">
-        {!isCollapsed && <p className="text-xs font-semibold text-[#637381] mb-2">SUPPORT</p>}
+        {!isCollapsed && <p data-sidebar="group-label" className="text-xs font-semibold text-sidebar-foreground/70 mb-2">SUPPORT</p>}
         <nav className="flex flex-col gap-1">
           <SidebarLink
             to="/settings"
@@ -153,7 +154,7 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="px-3 py-4 border-t border-[#E0E0E0]">
+      <div className="px-3 py-4 border-t border-sidebar-border">
         {!isCollapsed && <SidebarModeToggle />}
         {isCollapsed && (
           <div className="flex justify-center">

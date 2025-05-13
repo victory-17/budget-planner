@@ -1,0 +1,60 @@
+/* Dark mode sidebar fixes */
+.dark {
+  /* General sidebar colors */
+  --sidebar-background: 222 47% 11%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-accent: 215 25% 27%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217 33% 17%;
+  
+  /* Make sure sidebar menu items have proper contrast in dark mode */
+  --sidebar-primary: 248 78% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+}
+
+/* Specific dark mode sidebar adjustments */
+.dark [data-sidebar="sidebar"] {
+  background-color: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
+  border-color: hsl(var(--sidebar-border));
+}
+
+.dark [data-sidebar="menu-button"] {
+  color: hsl(var(--sidebar-foreground));
+}
+
+.dark [data-sidebar="menu-button"]:hover,
+.dark [data-sidebar="menu-button"][data-active="true"] {
+  background-color: hsl(var(--sidebar-accent));
+  color: hsl(var(--sidebar-accent-foreground));
+}
+
+.dark [data-sidebar="group-label"] {
+  color: hsl(var(--sidebar-foreground) / 0.7);
+}
+
+.dark [data-sidebar="separator"] {
+  background-color: hsl(var(--sidebar-border));
+}
+
+/* Make active menu items more obvious in dark mode */
+.dark [data-sidebar="menu-button"][data-active="true"] {
+  background-color: hsl(var(--sidebar-primary) / 0.2);
+  color: hsl(var(--sidebar-primary-foreground));
+  font-weight: 500;
+}
+
+/* Ensure sub-menu items inherit proper colors */
+.dark [data-sidebar="menu-sub"] {
+  border-color: hsl(var(--sidebar-border));
+}
+
+.dark [data-sidebar="menu-sub-button"] {
+  color: hsl(var(--sidebar-foreground) / 0.9);
+}
+
+.dark [data-sidebar="menu-sub-button"]:hover,
+.dark [data-sidebar="menu-sub-button"][data-active="true"] {
+  background-color: hsl(var(--sidebar-accent));
+  color: hsl(var(--sidebar-accent-foreground));
+} 

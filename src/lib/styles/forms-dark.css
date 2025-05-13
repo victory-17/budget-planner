@@ -1,0 +1,72 @@
+/* Form elements dark mode fixes */
+
+/* Search input in dark mode */
+.dark [type="search"],
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"] {
+  background-color: hsl(223 47% 14%);
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+.dark [type="search"]::placeholder,
+.dark input[type="text"]::placeholder,
+.dark input[type="email"]::placeholder,
+.dark input[type="password"]::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark [type="search"]:focus,
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.5);
+}
+
+/* Fix form inputs with icons */
+.dark .relative svg {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Specific fix for the search input in the header */
+.dark .search-input {
+  background-color: hsl(223 47% 14%);
+  color: hsl(var(--foreground));
+  border-color: transparent;
+}
+
+.dark .search-input:focus {
+  border-color: hsl(var(--primary));
+}
+
+/* Dropdown menus in dark mode */
+.dark [data-radix-popper-content-wrapper] {
+  background-color: hsl(223 47% 13%);
+  border-color: hsl(var(--border));
+}
+
+/* Custom date picker in dark mode */
+.dark .react-datepicker {
+  background-color: hsl(223 47% 13%);
+  border-color: hsl(var(--border));
+}
+
+.dark .react-datepicker__header {
+  background-color: hsl(222 47% 11%);
+  border-color: hsl(var(--border));
+}
+
+.dark .react-datepicker__day {
+  color: hsl(var(--foreground));
+}
+
+.dark .react-datepicker__day:hover {
+  background-color: hsl(var(--accent));
+}
+
+.dark .react-datepicker__day--selected {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+} 

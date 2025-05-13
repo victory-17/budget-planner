@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { 
   Search, 
   Bell, 
-  Share2, 
   Calendar, 
   Download,
   LogOut,
@@ -78,7 +77,7 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
       <div className="container px-6 mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#212B36]">{title}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
             {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
           </div>
 
@@ -89,7 +88,7 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
               <Input
                 type="search"
                 placeholder="Search..."
-                className="w-full sm:w-[200px] pl-8 rounded-full bg-[#F9FAFB] border-[#E0E0E0]"
+                className="search-input w-full sm:w-[200px] pl-8 rounded-full"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
               />
@@ -121,46 +120,40 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
             </Button>
 
             {/* Add Payment Button */}
-            <Button 
-              onClick={addPayment} 
-              className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white gap-2 text-sm"
-            >
+            <Button onClick={addPayment} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Payment
             </Button>
 
-            <div className="flex items-center gap-2">
-              {/* Notification Bell */}
-              <Button variant="ghost" size="icon" className="rounded-full text-[#212B36]">
-                <Bell className="h-5 w-5" />
-              </Button>
+            {/* Notifications */}
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Bell className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
 
-              {/* Share Button */}
-              <Button variant="ghost" size="icon" className="rounded-full text-[#212B36]">
-                <Share2 className="h-5 w-5" />
-              </Button>
-
-              {/* User Profile Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Avatar className="h-9 w-9 cursor-pointer">
-                    <AvatarImage src="" alt={user?.email || "User"} />
-                    <AvatarFallback className="bg-[#4E60FF] text-white">{userInitials}</AvatarFallback>
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src="/avatar.png" />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {userInitials}
+                    </AvatarFallback>
                   </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-md shadow-md">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>
-                    Profile Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

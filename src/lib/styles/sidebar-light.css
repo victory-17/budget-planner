@@ -1,0 +1,39 @@
+/* Light mode sidebar fixes */
+
+/* General sidebar colors for light mode */
+:root {
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 248 78% 60%;
+  --sidebar-primary-foreground: 255 255 255;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 248 78% 60%;
+}
+
+/* Active state styling */
+[data-sidebar="sidebar"] .bg-sidebar-primary\/10 {
+  background-color: hsl(248 78% 60% / 0.1);
+  color: hsl(248 78% 60%);
+}
+
+/* Menu group labels */
+[data-sidebar="group-label"] {
+  color: hsl(215 16% 47%);
+}
+
+/* Hover states */
+.hover\:bg-sidebar-accent:hover {
+  background-color: hsl(var(--sidebar-accent));
+}
+
+.hover\:text-sidebar-accent-foreground:hover {
+  color: hsl(var(--sidebar-accent-foreground));
+}
+
+/* Active sidebar item */
+.active-sidebar-item {
+  background-color: hsl(248 78% 60% / 0.1);
+  color: hsl(248 78% 60%);
+} 

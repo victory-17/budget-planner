@@ -1,0 +1,66 @@
+/* Button dark mode fixes */
+
+/* Fix primary button in dark mode */
+.dark .bg-\[\#4E60FF\] {
+  background-color: hsl(246 80% 60%);
+}
+
+.dark .bg-\[\#4E60FF\]:hover {
+  background-color: hsl(246 80% 50%);
+}
+
+.dark .hover\:bg-\[\#4E60FF\]\/90:hover {
+  background-color: hsl(246 80% 50% / 0.9);
+}
+
+.dark .text-\[\#4E60FF\] {
+  color: hsl(246 80% 70%);
+}
+
+.dark .hover\:text-\[\#4E60FF\]\/90:hover {
+  color: hsl(246 80% 70% / 0.9);
+}
+
+.dark .hover\:bg-\[\#4E60FF\]\/10:hover {
+  background-color: hsl(246 80% 60% / 0.2);
+}
+
+/* Fix outlined buttons in dark mode */
+.dark button[variant="outline"], 
+.dark .border-\[\#E0E0E0\] {
+  border-color: hsl(var(--border));
+}
+
+/* Fix ghost buttons in dark mode */
+.dark button[variant="ghost"]:hover {
+  background-color: hsl(var(--accent));
+}
+
+/* Fix rounded buttons with icons */
+.dark button.rounded-full {
+  color: hsl(var(--foreground));
+}
+
+.dark button.rounded-full:hover {
+  background-color: hsl(var(--accent));
+}
+
+/* Ensure icon buttons have good contrast */
+.dark svg {
+  color: inherit;
+}
+
+/* Fix destructive buttons */
+.dark .bg-red-600 {
+  background-color: hsl(0 90% 45%);
+}
+
+.dark .hover\:bg-red-700:hover {
+  background-color: hsl(0 90% 40%);
+}
+
+/* Fix button focus states */
+.dark button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+} 

@@ -1,0 +1,60 @@
+/* Button light mode fixes */
+
+/* Fix primary button in light mode */
+.bg-\[\#4E60FF\] {
+  background-color: hsl(246 80% 60%);
+}
+
+.bg-\[\#4E60FF\]:hover {
+  background-color: hsl(246 80% 55%);
+}
+
+.hover\:bg-\[\#4E60FF\]\/90:hover {
+  background-color: hsl(246 80% 55% / 0.9);
+}
+
+.text-\[\#4E60FF\] {
+  color: hsl(246 80% 60%);
+}
+
+.hover\:text-\[\#4E60FF\]\/90:hover {
+  color: hsl(246 80% 60% / 0.9);
+}
+
+.hover\:bg-\[\#4E60FF\]\/10:hover {
+  background-color: hsl(246 80% 60% / 0.1);
+}
+
+/* Active states for sidebar links */
+.bg-\[\#4E60FF\]\/10 {
+  background-color: hsl(246 80% 60% / 0.1);
+}
+
+/* Ensure focus states use primary color */
+button:focus-visible, 
+a:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Fix for dashboard cards */
+.bg-\[\#4CAF50\] {
+  background-color: hsl(122 38% 40%);
+}
+
+.bg-\[\#2196F3\] {
+  background-color: hsl(207 90% 54%);
+}
+
+.bg-\[\#FFC107\] {
+  background-color: hsl(45 100% 51%);
+}
+
+.bg-\[\#9C27B0\] {
+  background-color: hsl(291 69% 49%);
+}
+
+/* Fix for budget logo */
+.logo-bg {
+  background-color: #5847eb;
+} 
