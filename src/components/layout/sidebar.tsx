@@ -102,7 +102,13 @@ export function Sidebar() {
           <SidebarLink
             to="/dashboard"
             icon={<LayoutDashboard className="h-5 w-5" />}
-            label="Dashboard & Budgets"
+            label="Dashboard"
+            isCollapsed={isCollapsed}
+          />
+          <SidebarLink
+            to="/budgets"
+            icon={<Wallet2 className="h-5 w-5" />}
+            label="Budgets"
             isCollapsed={isCollapsed}
           />
           <SidebarLink

@@ -470,7 +470,7 @@ const Dashboard = () => {
                 <SavingsBudget data={budgetStatus} loading={budgetsLoading} />
                 
                 {/* Running Budget */}
-                <RunningBudget />
+                <RunningBudget data={budgetStatus} loading={budgetsLoading} />
               </div>
             </div>
           </TabsContent>

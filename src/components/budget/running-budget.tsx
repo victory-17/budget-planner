@@ -6,41 +6,55 @@ import { cn } from "@/lib/utils";
 
 interface RunningBudgetProps {
   className?: string;
+  data?: any[];  // Budget data passed from parent component
+  loading?: boolean;
 }
 
-export function RunningBudget({ className }: RunningBudgetProps) {
+export function RunningBudget({ className, data = [], loading = false }: RunningBudgetProps) {
   const [timeframe, setTimeframe] = useState("today");
   
-  // Mock data
-  const budgetAmount = 350.0;
-  const totalSpent = 35.0;
-  const totalIncome = 60.0;
-  const percentage = Math.min(100, Math.round((totalSpent / budgetAmount) * 100));
+  // Calculate budget metrics from passed data instead of using mock data
+  const calculateBudgetMetrics = () => {
+    if (!data || data.length === 0) {
+      return {
+        budgetAmount: 0,
+        totalSpent: 0,
+        totalIncome: 0,
+        percentage: 0,
+        categories: []
+      };
+    }
+    
+    // Get total budgeted amount across all categories
+    const budgetAmount = data.reduce((sum, budget) => 
+      sum + (typeof budget.amount === 'number' ? budget.amount : 0), 0);
+    
+    // Get total spent amount
+    const totalSpent = data.reduce((sum, budget) => 
+      sum + (typeof budget.spent === 'number' ? budget.spent : 0), 0);
+    
+    // For this example, we'll set income as a placeholder (in a real app, this would come from transaction data)
+    const totalIncome = 60.0; // Placeholder, would be calculated from income transactions
+    
+    // Calculate percentage spent of total budget
+    const percentage = budgetAmount > 0 
+      ? Math.min(100, Math.round((totalSpent / budgetAmount) * 100)) 
+      : 0;
+    
+    // Format top categories for display
+    const categories = data.slice(0, 3).map(budget => ({
+      name: budget.category || "Uncategorized",
+      spent: typeof budget.spent === 'number' ? budget.spent : 0,
+      total: typeof budget.amount === 'number' ? budget.amount : 0,
+      percentage: budget.amount > 0 
+        ? Math.min(100, Math.round((budget.spent / budget.amount) * 100))
+        : 0
+    }));
+    
+    return { budgetAmount, totalSpent, totalIncome, percentage, categories };
+  };
   
-  // TODO: Connect to backend endpoint: GET /api/budget/summary
-  
-  const categories = [
-    {
-      name: "Eating & Drinking",
-      spent: 45.0,
-      total: 55.0,
-      percentage: 82,
-    },
-    {
-      name: "Education",
-      spent: 95.0,
-      total: 120.0,
-      percentage: 79,
-    },
-    {
-      name: "Transportation",
-      spent: 25.0,
-      total: 40.0,
-      percentage: 63,
-    },
-  ];
-  
-  // TODO: Connect to backend endpoint: GET /api/budget/categories?summary=true
+  const { budgetAmount, totalSpent, totalIncome, percentage, categories } = calculateBudgetMetrics();
 
   const getSafetyLabel = (percent: number) => {
     if (percent < 60) return { text: "Still Safe", color: "#00C896" };
@@ -49,6 +63,23 @@ export function RunningBudget({ className }: RunningBudgetProps) {
   };
 
   const safety = getSafetyLabel(percentage);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className={cn("rounded-xl border-[#E0E0E0] shadow-sm", className)}>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-[#212B36]">Running Budget</CardTitle>
+          <div className="w-[120px] h-8"></div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center items-center py-24">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4E60FF]"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("rounded-xl border-[#E0E0E0] shadow-sm", className)}>
@@ -124,21 +155,27 @@ export function RunningBudget({ className }: RunningBudgetProps) {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {categories.map((category) => (
-            <div key={category.name} className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <div className="text-[#212B36]">{category.name}</div>
-                <div className="font-medium text-[#212B36]">${category.spent.toFixed(2)}</div>
+        {categories.length > 0 ? (
+          <div className="space-y-4">
+            {categories.map((category) => (
+              <div key={category.name} className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <div className="text-[#212B36]">{category.name}</div>
+                  <div className="font-medium text-[#212B36]">${category.spent.toFixed(2)}</div>
+                </div>
+                <Progress 
+                  value={category.percentage} 
+                  className="h-2 bg-[#F5F5F5]" 
+                  indicatorClassName={`${category.percentage > 80 ? 'bg-[#FFC300]' : 'bg-[#4E60FF]'}`}
+                />
               </div>
-              <Progress 
-                value={category.percentage} 
-                className="h-2 bg-[#F5F5F5]" 
-                indicatorClassName={`${category.percentage > 80 ? 'bg-[#FFC300]' : 'bg-[#4E60FF]'}`}
-              />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4 text-muted-foreground">
+            No budget categories available
+          </div>
+        )}
       </CardContent>
     </Card>
   );
