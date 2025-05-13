@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 // Mock data for budget categories
 const mockCategories = [
@@ -46,7 +47,7 @@ const mockCategories = [
   },
 ];
 
-// GET /api/budget/categories
+// TODO: Connect to backend endpoint: GET /api/budget/categories
 
 interface BudgetCategoryTableProps {
   className?: string;
@@ -78,15 +79,15 @@ export function BudgetCategoryTable({ className }: BudgetCategoryTableProps) {
   };
 
   return (
-    <Card className={className}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Budget Category</CardTitle>
+    <Card className={cn("rounded-xl border-[#E0E0E0] shadow-sm", className)}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-[#212B36]">Budget Category</CardTitle>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1" onClick={() => {}}>
+          <Button variant="outline" size="sm" className="gap-1 rounded-md text-[#637381]" onClick={() => {}}>
             <Edit className="h-4 w-4" />
             Edit
           </Button>
-          <Button variant="ghost" size="sm" className="gap-1" onClick={viewAllCategories}>
+          <Button variant="ghost" size="sm" className="gap-1 text-[#4E60FF]" onClick={viewAllCategories}>
             See All
             <ArrowUpRight className="h-4 w-4" />
           </Button>
@@ -96,7 +97,7 @@ export function BudgetCategoryTable({ className }: BudgetCategoryTableProps) {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-xs text-left text-muted-foreground border-b">
+              <tr className="text-xs text-left text-[#637381] border-b border-[#E0E0E0]">
                 <th className="font-medium py-3 px-2">Category</th>
                 <th className="font-medium py-3 px-2">Monthly Limit</th>
                 <th className="font-medium py-3 px-2">Spent Today</th>
@@ -108,13 +109,13 @@ export function BudgetCategoryTable({ className }: BudgetCategoryTableProps) {
               {categories.map((category) => (
                 <tr 
                   key={category.id} 
-                  className="border-b last:border-b-0 hover:bg-muted/50 cursor-pointer"
+                  className="border-b border-[#E0E0E0] last:border-b-0 hover:bg-[#F9FAFB] cursor-pointer"
                   onClick={() => editCategory(category.id)}
                 >
-                  <td className="py-3 px-2">{category.name}</td>
-                  <td className="py-3 px-2">${category.monthlyLimit.toFixed(2)}</td>
-                  <td className="py-3 px-2">${category.spentToday.toFixed(2)}</td>
-                  <td className="py-3 px-2">
+                  <td className="py-3 px-2 text-[#212B36] font-medium">{category.name}</td>
+                  <td className="py-3 px-2 text-[#212B36]">${category.monthlyLimit.toFixed(2)}</td>
+                  <td className="py-3 px-2 text-[#212B36]">${category.spentToday.toFixed(2)}</td>
+                  <td className="py-3 px-2 text-[#212B36]">
                     ${Math.abs(category.remaining).toFixed(2)}
                     {category.remaining < 0 && <span className="text-red-500"> (overspent)</span>}
                   </td>

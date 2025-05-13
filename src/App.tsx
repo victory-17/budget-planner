@@ -20,7 +20,6 @@ import DiagnoseAuth from "./pages/auth/DiagnoseAuth";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Accounts from "./pages/accounts/Accounts";
 import Transactions from "./pages/transactions/Transactions";
-import Budgets from "./pages/budgets/Budgets";
 import Reports from "./pages/reports/Reports";
 import Settings from "./pages/settings/Settings";
 import Help from "./pages/help/Help";
@@ -98,7 +97,8 @@ const App = () => (
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/accounts" element={<Accounts />} />
                   <Route path="/transactions" element={<Transactions />} />
-                  <Route path="/budgets" element={<Budgets />} />
+                  {/* Redirect /budgets to /dashboard */}
+                  <Route path="/budgets" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/help" element={<Help />} />

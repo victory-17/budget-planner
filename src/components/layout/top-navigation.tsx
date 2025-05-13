@@ -7,7 +7,8 @@ import {
   Calendar, 
   Download,
   LogOut,
-  Plus
+  Plus,
+  ChevronDown
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,13 +42,13 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
     e.preventDefault();
     // Search functionality placeholder
     console.log("Search for:", searchValue);
-    // Placeholder: Connect to GET /api/search?query=${searchValue}
+    // TODO: Connect to backend endpoint: GET /api/search?query=${searchValue}
   };
 
   const exportData = () => {
     // Export functionality placeholder
     console.log("Exporting data...");
-    // Placeholder: Connect to GET /api/export
+    // TODO: Connect to backend endpoint: GET /api/export
   };
 
   const addPayment = () => {
@@ -77,66 +78,77 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
       <div className="container px-6 mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">{title}</h1>
+            <h1 className="text-2xl font-bold text-[#212B36]">{title}</h1>
             {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative w-full sm:w-auto">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search..."
-                className="w-full sm:w-[200px] pl-8 rounded-full bg-background"
+                className="w-full sm:w-[200px] pl-8 rounded-full bg-[#F9FAFB] border-[#E0E0E0]"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
               />
             </form>
 
+            {/* Date Picker */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2 rounded-md text-sm">
+                  <Calendar className="h-4 w-4" />
+                  <span>{formattedDate}</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <CalendarComponent
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Export Button */}
+            <Button variant="outline" onClick={exportData} className="gap-2 text-sm">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+
+            {/* Add Payment Button */}
+            <Button 
+              onClick={addPayment} 
+              className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white gap-2 text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Add Payment
+            </Button>
+
             <div className="flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("flex items-center gap-2", !date && "text-muted-foreground")}>
-                    <Calendar className="h-4 w-4" />
-                    <span>{formattedDate}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <CalendarComponent
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Button variant="outline" onClick={exportData}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-
-              <Button onClick={addPayment} className="bg-budget-green hover:bg-budget-green/90 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Payment
-              </Button>
-
-              <Button variant="ghost" size="icon" className="rounded-full">
+              {/* Notification Bell */}
+              <Button variant="ghost" size="icon" className="rounded-full text-[#212B36]">
                 <Bell className="h-5 w-5" />
               </Button>
 
-              <Button variant="ghost" size="icon" className="rounded-full">
+              {/* Share Button */}
+              <Button variant="ghost" size="icon" className="rounded-full text-[#212B36]">
                 <Share2 className="h-5 w-5" />
               </Button>
 
+              {/* User Profile Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Avatar className="h-9 w-9 cursor-pointer">
                     <AvatarImage src="" alt={user?.email || "User"} />
-                    <AvatarFallback>{userInitials}</AvatarFallback>
+                    <AvatarFallback className="bg-[#4E60FF] text-white">{userInitials}</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-56 rounded-md shadow-md">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
