@@ -112,12 +112,6 @@ export function Sidebar() {
             isCollapsed={isCollapsed}
           />
           <SidebarLink
-            to="/accounts"
-            icon={<CreditCard className="h-5 w-5" />}
-            label="Accounts"
-            isCollapsed={isCollapsed}
-          />
-          <SidebarLink
             to="/transactions"
             icon={<ArrowLeftRight className="h-5 w-5" />}
             label="Transactions"

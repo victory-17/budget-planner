@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, Plus, Minus } from "lucide-react";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from "@/lib/providers/auth-provider";
 
 import {
   Form,
@@ -83,13 +84,22 @@ const categoryOptions = {
 };
 
 interface TransactionFormProps {
-  onSave: (data: Transaction) => void;
-  onCancel: () => void;
+  onSubmit?: (data: Transaction) => void;
+  onSave?: (data: Transaction) => void;
+  onCancel?: () => void;
   initialData?: Partial<Transaction>;
-  userId: string;
+  userId?: string;
 }
 
-export function TransactionForm({ onSave, onCancel, initialData, userId }: TransactionFormProps) {
+export function TransactionForm({ 
+  onSubmit, 
+  onSave,
+  onCancel,
+  initialData,
+  userId: providedUserId 
+}: TransactionFormProps) {
+  const { user } = useAuth();
+  const userId = providedUserId || user?.id || 'guest-user';
   const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null);
   
   // Fetch user's default account ID
@@ -118,7 +128,7 @@ export function TransactionForm({ onSave, onCancel, initialData, userId }: Trans
   const transactionType = form.watch("type");
 
   // Submit handler
-  function onSubmit(data: TransactionFormValues) {
+  function handleSubmit(data: TransactionFormValues) {
     // Convert amount string to number for API
     const transaction: Transaction = {
       user_id: userId,
@@ -131,12 +141,17 @@ export function TransactionForm({ onSave, onCancel, initialData, userId }: Trans
     };
     
     console.log("Submitting transaction:", transaction);
-    onSave(transaction);
+    // Use onSave if provided, otherwise fall back to onSubmit
+    if (onSave) {
+      onSave(transaction);
+    } else if (onSubmit) {
+      onSubmit(transaction);
+    }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Transaction Type */}
         <FormField
           control={form.control}
@@ -282,18 +297,13 @@ export function TransactionForm({ onSave, onCancel, initialData, userId }: Trans
         />
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-2 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit"
-            className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white"
-          >
+        <div className="flex justify-end space-x-2 pt-4">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white">
             Save Transaction
           </Button>
         </div>

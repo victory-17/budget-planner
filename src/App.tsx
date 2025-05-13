@@ -19,7 +19,6 @@ import DiagnoseAuth from "./pages/auth/DiagnoseAuth";
 // Main Pages
 import Dashboard from "./pages/dashboard/Dashboard";
 import Budgets from "./pages/budgets/Budgets";
-import Accounts from "./pages/accounts/Accounts";
 import Transactions from "./pages/transactions/Transactions";
 import Reports from "./pages/reports/Reports";
 import Settings from "./pages/settings/Settings";
@@ -97,7 +96,6 @@ const App = () => (
                 <Route element={<Layout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/budgets" element={<Budgets />} />
-                  <Route path="/accounts" element={<Accounts />} />
                   <Route path="/transactions" element={<Transactions />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />

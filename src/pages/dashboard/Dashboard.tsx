@@ -6,9 +6,10 @@ import { BudgetChart } from "@/components/budget/budget-chart";
 import { BudgetCategoryTable } from "@/components/budget/budget-category-table";
 import { SavingsBudget } from "@/components/budget/savings-budget";
 import { RunningBudget } from "@/components/budget/running-budget";
+import { IncomeExpenseChart } from "@/components/budget/income-expense-chart";
 import { ShoppingBag, Coffee, Home, CreditCard, Wallet, Plus, TrendingUp, TrendingDown, AlertCircle, DollarSign, BriefcaseBusiness, Landmark, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TransactionList } from "@/components/transactions/transaction-list";
+import { SimpleTransactionList } from "@/components/transactions/simple-transaction-list";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { Button } from "@/components/ui/button";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -38,7 +39,12 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [addTransactionOpen, setAddTransactionOpen] = useState(false);
   const [showBudgetAlert, setShowBudgetAlert] = useState(false);
-  const [budgetAlertData, setBudgetAlertData] = useState<any>(null);
+  const [budgetAlertData, setBudgetAlertData] = useState<{
+    category: string;
+    percentage: number;
+    spent: number;
+    budgeted: number;
+  } | null>(null);
   const [editTransactionData, setEditTransactionData] = useState<{id: string, data: Transaction} | null>(null);
 
   // Get the current user ID from auth
@@ -231,7 +237,7 @@ const Dashboard = () => {
   return (
     <div>
       <TopNavigation 
-        title="Dashboard & Budgets" 
+        title="Dashboard" 
         subtitle="Track and manage your financial goals" 
         action={
           <Button 
@@ -248,321 +254,139 @@ const Dashboard = () => {
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="mb-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="budgets">Budget Management</TabsTrigger>
-            <TabsTrigger value="recent-transactions">Recent Transactions</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
           
-          {/* Overview Tab (Dashboard) */}
           <TabsContent value="overview">
-            {/* Income/Expense Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <Card className="rounded-xl border-[#E0E0E0] shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-semibold text-[#212B36] flex items-center">
-                    <TrendingUp className="mr-2 h-5 w-5 text-green-500" />
-                    Income
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    ${totalIncome.toFixed(2)}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">Total income this month</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="rounded-xl border-[#E0E0E0] shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-semibold text-[#212B36] flex items-center">
-                    <TrendingDown className="mr-2 h-5 w-5 text-red-500" />
-                    Expenses
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    ${totalExpense.toFixed(2)}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">Total expenses this month</p>
-                </CardContent>
-              </Card>
+            {/* Income vs Expense Chart with integrated summary cards */}
+            <div className="mb-6">
+              <IncomeExpenseChart 
+                totalIncome={totalIncome}
+                totalExpense={totalExpense}
+                loading={transactionsLoading}
+              />
             </div>
-            
-            {/* Expense Category Cards */}
-            {expenseCategories.length > 0 ? (
-              <>
-                <h3 className="text-lg font-semibold text-[#212B36] mb-3">Expense Categories</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  {expenseCategories.map((category) => (
-                    <SummaryCard
-                      key={category.id}
-                      title={category.title}
-                      amount={category.amount}
-                      icon={category.icon}
-                      iconBgColor={category.bgColor}
-                      subtitle="Budget"
-                    />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <Card className="mb-6 p-6">
-                <NoTransactionsMessage />
-              </Card>
-            )}
 
-            {/* Income Category Cards */}
-            {incomeCategories.length > 0 ? (
-              <>
-                <h3 className="text-lg font-semibold text-[#212B36] mb-3">Income Sources</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  {incomeCategories.map((category) => (
-                    <SummaryCard
-                      key={category.id}
-                      title={category.title}
-                      amount={category.amount}
-                      icon={category.icon}
-                      iconBgColor={category.bgColor}
-                      subtitle="Revenue"
-                    />
-                  ))}
-                </div>
-              </>
-            ) : null}
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column (2/3 width) */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Budget Chart */}
-                <BudgetChart data={budgetStatus} loading={budgetsLoading} />
-                
-                {/* Recent Transactions Preview */}
-                <Card className="rounded-xl border-[#E0E0E0] shadow-sm">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-lg font-semibold text-[#212B36]">
-                        Recent Transactions
-                      </CardTitle>
-                      <Button
-                        variant="link"
-                        onClick={() => setActiveTab("recent-transactions")}
-                        className="text-[#4E60FF]"
-                      >
-                        View All
-                      </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+              <div className="lg:col-span-2">
+                <div className="grid gap-4">
+                  {/* Expense Categories */}
+                  <div>
+                    <h2 className="text-lg font-semibold mb-3">Expense Categories</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {transactionsLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <Card key={i} className="border-[#E0E0E0] shadow-sm rounded-xl animate-pulse">
+                            <CardContent className="p-4">
+                              <div className="h-16 bg-gray-200 rounded-md"></div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : expenseCategories.length === 0 ? (
+                        <Card className="border-[#E0E0E0] shadow-sm rounded-xl col-span-2">
+                          <CardContent className="p-4 text-center">
+                            <p className="text-muted-foreground">No expense data available</p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        expenseCategories.map((category) => (
+                          <SummaryCard
+                            key={category.id}
+                            title={category.title}
+                            amount={category.amount}
+                            icon={category.icon}
+                            bgColor={category.bgColor}
+                            className="rounded-xl border-[#E0E0E0] shadow-sm"
+                          />
+                        ))
+                      )}
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {transactionsLoading ? (
-                      <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4E60FF]"></div>
-                      </div>
-                    ) : transactions.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="text-left text-xs text-muted-foreground font-medium border-b">
-                              <th className="pb-2">Date</th>
-                              <th className="pb-2">Category</th>
-                              <th className="pb-2">Amount</th>
-                              <th className="pb-2">Type</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {transactions.map((transaction) => (
-                              <tr key={transaction.id} className="border-b border-[#f5f5f5] last:border-0">
-                                <td className="py-3 text-sm">
-                                  {new Date(transaction.date).toLocaleDateString()}
-                                </td>
-                                <td className="py-3 text-sm capitalize">
-                                  {transaction.category}
-                                </td>
-                                <td className="py-3 text-sm font-medium">
-                                  <span className={transaction.type === "income" ? "text-green-600" : "text-red-600"}>
-                                    ${transaction.amount.toFixed(2)}
-                                  </span>
-                                </td>
-                                <td className="py-3 text-sm">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    transaction.type === "income" 
-                                      ? "bg-green-100 text-green-800" 
-                                      : "bg-red-100 text-red-800"
-                                  }`}>
-                                    {transaction.type}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <NoTransactionsMessage />
-                    )}
-                  </CardContent>
-                </Card>
+                  </div>
+                  
+                  {/* Income Sources */}
+                  <div>
+                    <h2 className="text-lg font-semibold mb-3">Income Sources</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {transactionsLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <Card key={i} className="border-[#E0E0E0] shadow-sm rounded-xl animate-pulse">
+                            <CardContent className="p-4">
+                              <div className="h-16 bg-gray-200 rounded-md"></div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : incomeCategories.length === 0 ? (
+                        <Card className="border-[#E0E0E0] shadow-sm rounded-xl col-span-2">
+                          <CardContent className="p-4 text-center">
+                            <p className="text-muted-foreground">No income data available</p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        incomeCategories.map((category) => (
+                          <SummaryCard
+                            key={category.id}
+                            title={category.title}
+                            amount={category.amount}
+                            icon={category.icon}
+                            bgColor={category.bgColor}
+                            className="rounded-xl border-[#E0E0E0] shadow-sm"
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              {/* Right Column (1/3 width) */}
-              <div className="space-y-6">
-                {/* Budget Status */}
-                <Card className="rounded-xl border-[#E0E0E0] shadow-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-semibold text-[#212B36]">
-                      Budget Status
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {budgetsLoading ? (
-                      <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4E60FF]"></div>
-                      </div>
-                    ) : budgetStatus.length === 0 ? (
-                      <div className="text-center py-4">
-                        <p className="text-muted-foreground">No budgets set</p>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setActiveTab("budgets")}
-                          className="mt-2"
-                        >
-                          Create Budget
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {budgetStatus.slice(0, 4).map((budget) => (
-                          <div key={budget.id} className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="font-medium">{budget.category}</span>
-                              <span className="text-sm">
-                                ${typeof budget.spent === 'number' ? budget.spent.toFixed(2) : '0.00'} / ${typeof budget.amount === 'number' ? budget.amount.toFixed(2) : '0.00'}
-                              </span>
-                            </div>
-                            <Progress 
-                              value={typeof budget.progress === 'number' ? budget.progress : 0} 
-                              className="h-2"
-                              indicatorClassName={budget.status === "exceeded" ? "bg-red-500" : ""}
-                            />
-                            {budget.status === "exceeded" && (
-                              <p className="text-xs text-red-500 flex items-center">
-                                <AlertCircle className="h-3 w-3 mr-1" />
-                                Budget exceeded
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                        
-                        {budgetStatus.length > 4 && (
-                          <Button 
-                            variant="ghost" 
-                            onClick={() => setActiveTab("budgets")}
-                            className="w-full text-[#4E60FF]"
-                          >
-                            View All Budgets
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                
-                {/* Savings Budget */}
-                <SavingsBudget data={budgetStatus} loading={budgetsLoading} />
-                
+              <div>
                 {/* Running Budget */}
                 <RunningBudget data={budgetStatus} loading={budgetsLoading} />
               </div>
             </div>
-          </TabsContent>
-          
-          {/* Budgets Tab */}
-          <TabsContent value="budgets">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Left Column (3/4 width) */}
-              <div className="lg:col-span-3 space-y-6">
-                {/* Budget Categories Table */}
-                <BudgetCategoryTable />
-              </div>
-              
-              {/* Right Column (1/4 width) */}
-              <div className="space-y-6">
-                {/* Budget Summary */}
-                <Card className="rounded-xl border-[#E0E0E0] shadow-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-semibold text-[#212B36]">
-                      Budget Summary
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Total Budget</span>
-                          <span className="font-medium">$2,500.00</span>
-                        </div>
-                        <Progress value={65} className="h-2" />
-                      </div>
-                      
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Spent So Far</span>
-                          <span className="font-medium">${typeof totalExpense === 'number' ? totalExpense.toFixed(2) : '0.00'}</span>
-                        </div>
-                        <Progress value={typeof totalExpense === 'number' ? (totalExpense / 2500 * 100) : 0} className="h-2" />
-                      </div>
-                      
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Remaining</span>
-                          <span className="font-medium">${typeof totalExpense === 'number' ? (2500 - totalExpense).toFixed(2) : '2500.00'}</span>
-                        </div>
-                        <Progress value={typeof totalExpense === 'number' ? ((2500 - totalExpense) / 2500 * 100) : 100} className="h-2" />
-                      </div>
-                      
-                      <div className="pt-2">
-                        <Button 
-                          className="w-full bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white"
-                        >
-                          Adjust Budget
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+            
+            {/* Savings Budget and Budget Chart */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <SavingsBudget />
+              <BudgetChart data={budgetStatus} loading={budgetsLoading} />
             </div>
           </TabsContent>
           
-          {/* Recent Transactions Tab */}
-          <TabsContent value="recent-transactions">
-            <TransactionList
-              transactions={transactions}
-              loading={transactionsLoading}
-              onEdit={(id, data) => setEditTransactionData({ id, data })}
-              onDelete={handleDeleteTransaction}
-              onFilter={() => {}}
-              onExport={() => {}}
-              pagination={{ currentPage: 0, pageCount: 1, total: transactions.length }}
-              onPageChange={() => {}}
-            />
+          <TabsContent value="transactions">
+            {/* Transactions Tab Content */}
+            <Card className="rounded-xl border-[#E0E0E0] shadow-sm overflow-hidden">
+              <CardHeader className="px-6 py-4 border-b border-[#E0E0E0]">
+                <CardTitle className="text-lg font-semibold text-[#212B36]">Recent Transactions</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {transactionsLoading ? (
+                  <div className="p-8 flex justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4E60FF]"></div>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <NoTransactionsMessage />
+                ) : (
+                  <SimpleTransactionList 
+                    transactions={transactions} 
+                    onEdit={(id, data) => setEditTransactionData({ id, data })} 
+                    onDelete={handleDeleteTransaction}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
       
-      {/* Add Transaction Dialog */}
+      {/* Transaction Dialog */}
       <Dialog open={addTransactionOpen} onOpenChange={setAddTransactionOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Add Transaction</DialogTitle>
+            <DialogTitle>Add New Transaction</DialogTitle>
             <DialogDescription>
-              Record a new income or expense transaction
+              Record a new transaction to track your finances
             </DialogDescription>
           </DialogHeader>
-          <TransactionForm 
-            userId={userId}
-            onSave={handleAddTransaction}
-            onCancel={() => setAddTransactionOpen(false)}
-          />
+          <TransactionForm onSave={handleAddTransaction} />
         </DialogContent>
       </Dialog>
       
@@ -571,18 +395,17 @@ const Dashboard = () => {
         open={editTransactionData !== null} 
         onOpenChange={(open) => !open && setEditTransactionData(null)}
       >
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Transaction</DialogTitle>
             <DialogDescription>
-              Update this transaction's details
+              Update transaction details
             </DialogDescription>
           </DialogHeader>
           {editTransactionData && (
             <TransactionForm 
-              userId={userId}
-              initialData={editTransactionData.data}
-              onSave={(data) => handleEditTransaction(editTransactionData.id, data)}
+              initialData={editTransactionData.data} 
+              onSave={(data) => handleEditTransaction(editTransactionData.id, data)} 
               onCancel={() => setEditTransactionData(null)}
             />
           )}
@@ -593,44 +416,27 @@ const Dashboard = () => {
       <AlertDialog open={showBudgetAlert} onOpenChange={setShowBudgetAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center text-amber-600">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              Budget Alert
-            </AlertDialogTitle>
+            <AlertCircle className="h-6 w-6 text-red-500 mb-2" />
+            <AlertDialogTitle>Budget Alert</AlertDialogTitle>
             <AlertDialogDescription>
               {budgetAlertData && (
                 <>
-                  You have exceeded your {budgetAlertData.category} budget for this month.
-                  <div className="mt-4 p-3 bg-amber-50 rounded-md">
-                    <div className="flex justify-between mb-1">
-                      <span>Budget:</span>
-                      <span className="font-medium">
-                        ${typeof budgetAlertData.limit === 'number' ? budgetAlertData.limit.toFixed(2) : '0.00'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between mb-1">
-                      <span>Spent:</span>
-                      <span className="font-medium text-red-600">
-                        ${typeof budgetAlertData.spent === 'number' ? budgetAlertData.spent.toFixed(2) : '0.00'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Overspent by:</span>
-                      <span className="font-medium text-red-600">
-                        ${typeof budgetAlertData.spent === 'number' && typeof budgetAlertData.limit === 'number' 
-                          ? (budgetAlertData.spent - budgetAlertData.limit).toFixed(2) 
-                          : '0.00'}
-                      </span>
+                  Your <strong>{budgetAlertData.category}</strong> budget is {budgetAlertData.percentage}% used.
+                  <div className="mt-2">
+                    <Progress value={budgetAlertData.percentage} className="h-2 mt-2" />
+                    <div className="flex justify-between text-sm mt-1">
+                      <span>Spent: ${budgetAlertData.spent}</span>
+                      <span>Budget: ${budgetAlertData.budgeted}</span>
                     </div>
                   </div>
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
+          <AlertDialogFooter>
             <AlertDialogCancel>Dismiss</AlertDialogCancel>
-            <AlertDialogAction className="bg-amber-600 hover:bg-amber-700">
-              View Budget
+            <AlertDialogAction onClick={() => setActiveTab('transactions')}>
+              See Transactions
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
