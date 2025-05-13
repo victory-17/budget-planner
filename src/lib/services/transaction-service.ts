@@ -8,11 +8,13 @@ export type Transaction = {
   amount: number;
   type: 'income' | 'expense';
   category: string;
+  budget_id?: string; // Optional association with a specific budget
   description?: string | null;
   date: string;
   created_at?: string;
 };
 
+// Type with required id field for internal use
 export type TransactionWithId = Transaction & { id: string };
 
 // Local storage key for transactions
@@ -29,282 +31,192 @@ const saveLocalTransactions = (transactions: TransactionWithId[]) => {
   localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
 };
 
-// Helper function to get user's default account
-export const getUserDefaultAccount = async (userId: string): Promise<string | null> => {
-  try {
-    const { data, error } = await supabase
-      .from("accounts")
-      .select("id")
-      .eq("user_id", userId)
-      .limit(1)
-      .single();
-    
-    if (error || !data) {
-      console.warn("Could not retrieve default account:", error);
-      // If no account exists, create one
-      const { data: newAccount, error: createError } = await supabase
-        .from("accounts")
-        .insert({
-          user_id: userId,
-          name: "Main Account",
-          type: "checking",
-          balance: 0,
-          currency: "USD"
-        })
-        .select()
-        .single();
-      
-      if (createError || !newAccount) {
-        console.error("Failed to create default account:", createError);
-        return null;
-      }
-      
-      return newAccount.id;
-    }
-    
-    return data.id;
-  } catch (err) {
-    console.warn("Error retrieving default account:", err);
-    return null;
+// Create a default account if none exists and return its ID
+export const getUserDefaultAccount = async (userId: string): Promise<string> => {
+  // First, try to get existing accounts from local storage
+  const accounts = JSON.parse(localStorage.getItem('budget_tracker_accounts') || '[]');
+  
+  // Check if user already has an account
+  const userAccount = accounts.find((a: any) => a.user_id === userId && a.is_default);
+  
+  if (userAccount) {
+    return userAccount.id;
   }
+  
+  // If no account exists, create a default one
+  const newAccountId = uuidv4();
+  const newAccount = {
+    id: newAccountId,
+    user_id: userId,
+    name: 'Default Account',
+    type: 'checking',
+    balance: 0,
+    currency: 'USD',
+    is_default: true,
+    created_at: new Date().toISOString(),
+  };
+  
+  accounts.push(newAccount);
+  localStorage.setItem('budget_tracker_accounts', JSON.stringify(accounts));
+  
+  return newAccountId;
 };
 
+// Transaction filters interface
+export interface TransactionFilters {
+  type?: 'income' | 'expense';
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  searchTerm?: string;
+  account_id?: string;
+  budget_id?: string;
+}
+
+// Pagination options
+export interface PaginationOptions {
+  page?: number;
+  limit?: number;
+}
+
+// Export transactions as CSV
+export const exportTransactionsAsCSV = (transactions: TransactionWithId[]) => {
+  // Check if there are any transactions
+  if (transactions.length === 0) {
+    return '';
+  }
+  
+  // Define CSV headers
+  const headers = ['Date', 'Type', 'Category', 'Amount', 'Description'];
+  
+  // Map transactions to CSV rows
+  const rows = transactions.map(t => [
+    t.date,
+    t.type,
+    t.category,
+    t.amount.toString(),
+    t.description || ''
+  ]);
+  
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.join(','))
+  ].join('\n');
+  
+  return csvContent;
+};
+
+// The transaction service
 export const transactionService = {
   // Get all transactions for a user
-  async getTransactions(userId: string, options?: { 
-    startDate?: string; 
-    endDate?: string;
-    category?: string;
-    type?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<TransactionWithId[]> {
-    try {
-      // First check if Supabase is available
-      const { error: pingError } = await supabase.from("transactions").select("count").limit(1);
-      
-      // If ping fails, go directly to local storage
-      if (pingError) {
-        console.warn("Supabase unavailable, getting from local storage:", pingError.message);
-        return this.getLocalTransactions(userId, options);
-      }
-      
-      // Try to get from Supabase
-      let query = supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", userId)
-        .order("date", { ascending: false });
-
-      // Apply filters if provided
-      if (options?.startDate) {
-        query = query.gte("date", options.startDate);
-      }
-      if (options?.endDate) {
-        query = query.lte("date", options.endDate);
-      }
-      if (options?.category) {
-        query = query.eq("category", options.category);
-      }
-      if (options?.type) {
-        query = query.eq("type", options.type);
-      }
-
-      // Apply pagination
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-      if (options?.offset) {
-        query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
-      }
-
-      const { data, error } = await query;
-      
-      if (error) {
-        console.warn("Falling back to local storage due to Supabase error:", error);
-        // Fall back to local storage if Supabase fails
-        return this.getLocalTransactions(userId, options);
-      }
-      
-      return data as TransactionWithId[];
-    } catch (err) {
-      console.warn("Falling back to local storage due to exception:", err);
-      // Fall back to local storage if Supabase is not available
-      return this.getLocalTransactions(userId, options);
-    }
+  async getTransactions(
+    userId: string, 
+    filters: TransactionFilters = {}, 
+    pagination: PaginationOptions = {}
+  ): Promise<TransactionWithId[]> {
+    // MOCK: Use local storage as mock database
+    return this.getLocalTransactions(userId, filters, pagination);
   },
-
+  
   // Get transactions from local storage with filtering
-  getLocalTransactions(userId: string, options?: { 
-    startDate?: string; 
-    endDate?: string;
-    category?: string;
-    type?: string;
-    limit?: number;
-    offset?: number;
-  }): TransactionWithId[] {
-    let transactions = getLocalTransactions().filter(t => t.user_id === userId);
+  getLocalTransactions(
+    userId: string, 
+    filters: TransactionFilters = {}, 
+    pagination: PaginationOptions = {}
+  ): TransactionWithId[] {
+    let transactions = getLocalTransactions()
+      .filter(t => t.user_id === userId);
     
     // Apply filters
-    if (options?.startDate) {
-      transactions = transactions.filter(t => t.date >= options.startDate!);
+    if (filters.type) {
+      transactions = transactions.filter(t => t.type === filters.type);
     }
-    if (options?.endDate) {
-      transactions = transactions.filter(t => t.date <= options.endDate!);
+    
+    if (filters.category) {
+      transactions = transactions.filter(t => t.category === filters.category);
     }
-    if (options?.category) {
-      transactions = transactions.filter(t => t.category === options.category);
+    
+    if (filters.account_id) {
+      transactions = transactions.filter(t => t.account_id === filters.account_id);
     }
-    if (options?.type) {
-      transactions = transactions.filter(t => t.type === options.type);
+    
+    if (filters.budget_id) {
+      transactions = transactions.filter(t => t.budget_id === filters.budget_id);
+    }
+    
+    if (filters.startDate) {
+      transactions = transactions.filter(t => t.date >= filters.startDate);
+    }
+    
+    if (filters.endDate) {
+      transactions = transactions.filter(t => t.date <= filters.endDate);
+    }
+    
+    if (filters.searchTerm) {
+      const searchTerm = filters.searchTerm.toLowerCase();
+      transactions = transactions.filter(t => 
+        (t.description && t.description.toLowerCase().includes(searchTerm)) ||
+        t.category.toLowerCase().includes(searchTerm)
+      );
     }
     
     // Sort by date (newest first)
     transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    // Apply pagination if needed
-    if (options?.offset !== undefined && options?.limit) {
-      transactions = transactions.slice(options.offset, options.offset + options.limit);
-    } else if (options?.limit) {
-      transactions = transactions.slice(0, options.limit);
+    // Apply pagination if specified
+    if (pagination.page !== undefined && pagination.limit !== undefined) {
+      const start = (pagination.page - 1) * pagination.limit;
+      const end = start + pagination.limit;
+      transactions = transactions.slice(start, end);
+    } else if (pagination.limit !== undefined) {
+      // Just apply limit without paging
+      transactions = transactions.slice(0, pagination.limit);
     }
     
     return transactions;
   },
-
+  
   // Get a single transaction by ID
   async getTransaction(id: string): Promise<TransactionWithId | null> {
-    try {
-      // Try Supabase first
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("id", id)
-        .single();
-      
-      if (error) {
-        // Fall back to local storage
-        const transaction = getLocalTransactions().find(t => t.id === id);
-        return transaction || null;
-      }
-      
-      return data as TransactionWithId;
-    } catch (err) {
-      // Fall back to local storage
-      const transaction = getLocalTransactions().find(t => t.id === id);
-      return transaction || null;
-    }
+    // MOCK: Use local storage as mock database
+    return this.getLocalTransaction(id);
   },
-
+  
+  // Get a single transaction from local storage
+  getLocalTransaction(id: string): TransactionWithId | null {
+    const transactions = getLocalTransactions();
+    return transactions.find(t => t.id === id) || null;
+  },
+  
   // Create a new transaction
   async createTransaction(transaction: Transaction): Promise<TransactionWithId> {
-    // Ensure the transaction has an ID and created_at date
+    // MOCK: Use local storage as mock database
+    return this.createLocalTransaction(transaction);
+  },
+  
+  // Create a transaction in local storage
+  createLocalTransaction(transaction: Transaction): TransactionWithId {
+    const transactions = getLocalTransactions();
+    
     const newTransaction: TransactionWithId = {
       ...transaction,
       id: transaction.id || uuidv4(),
-      created_at: transaction.created_at || new Date().toISOString(),
+      created_at: new Date().toISOString()
     };
     
-    try {
-      // Get or create account for this user
-      const accountId = await getUserDefaultAccount(newTransaction.user_id);
-      
-      if (!accountId) {
-        throw new Error("Could not get or create account for user");
-      }
-      
-      // Set the account ID for the transaction
-      newTransaction.account_id = accountId;
-      
-      // Try to save to Supabase only
-      const { data, error } = await supabase
-        .from("transactions")
-        .insert(newTransaction)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error("Error saving transaction to Supabase:", error);
-        throw error;
-      }
-      
-      return data as TransactionWithId;
-    } catch (err) {
-      console.error("Failed to create transaction:", err);
-      throw err;
-    }
-  },
-
-  // Create a transaction in local storage
-  createLocalTransaction(transaction: TransactionWithId): TransactionWithId {
-    const transactions = getLocalTransactions();
-    transactions.push(transaction);
+    transactions.push(newTransaction);
     saveLocalTransactions(transactions);
-    return transaction;
+    
+    return newTransaction;
   },
-
-  // Update an existing transaction
+  
+  // Update a transaction
   async updateTransaction(id: string, updates: Partial<Transaction>): Promise<TransactionWithId> {
-    try {
-      // First check if Supabase is available
-      const { error: pingError } = await supabase.from("transactions").select("count").limit(1);
-      
-      // If ping fails, go directly to local storage
-      if (pingError) {
-        console.warn("Supabase unavailable, updating in local storage:", pingError.message);
-        return this.updateLocalTransaction(id, updates);
-      }
-      
-      // Get the original transaction to preserve account_id if it's not in the updates
-      if (!updates.account_id) {
-        const original = await this.getTransaction(id);
-        if (original && original.account_id) {
-          updates.account_id = original.account_id;
-        } else {
-          // If for some reason we can't get the original account_id, try to get the default one
-          const accountId = await getUserDefaultAccount(updates.user_id || '');
-          if (accountId) {
-            updates.account_id = accountId;
-          } else {
-            // As a last resort, generate a valid UUID
-            updates.account_id = uuidv4();
-          }
-        }
-      } else if (updates.account_id === 'default') {
-        // If it's set to 'default', replace with an actual account ID
-        const accountId = updates.user_id ? 
-          await getUserDefaultAccount(updates.user_id) : null;
-        
-        if (accountId) {
-          updates.account_id = accountId;
-        } else {
-          // As a last resort, generate a valid UUID
-          updates.account_id = uuidv4();
-        }
-      }
-      
-      // Try to update in Supabase
-      const { data, error } = await supabase
-        .from("transactions")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      
-      if (error) {
-        console.warn("Updating in local storage due to Supabase error:", error);
-        // Fall back to local storage
-        return this.updateLocalTransaction(id, updates);
-      }
-      
-      return data as TransactionWithId;
-    } catch (err) {
-      console.warn("Updating in local storage due to exception:", err);
-      // Fall back to local storage
-      return this.updateLocalTransaction(id, updates);
-    }
+    // MOCK: Use local storage as mock database
+    return this.updateLocalTransaction(id, updates);
   },
-
+  
   // Update a transaction in local storage
   updateLocalTransaction(id: string, updates: Partial<Transaction>): TransactionWithId {
     const transactions = getLocalTransactions();
@@ -314,51 +226,22 @@ export const transactionService = {
       throw new Error(`Transaction with ID ${id} not found`);
     }
     
-    const updatedTransaction = {
+    transactions[index] = {
       ...transactions[index],
-      ...updates,
+      ...updates
     };
     
-    transactions[index] = updatedTransaction;
     saveLocalTransactions(transactions);
     
-    return updatedTransaction;
+    return transactions[index];
   },
-
+  
   // Delete a transaction
   async deleteTransaction(id: string): Promise<boolean> {
-    try {
-      // First check if Supabase is available
-      const { error: pingError } = await supabase.from("transactions").select("count").limit(1);
-      
-      // If ping fails, go directly to local storage
-      if (pingError) {
-        console.warn("Supabase unavailable, deleting from local storage:", pingError.message);
-        return this.deleteLocalTransaction(id);
-      }
-      
-      // Try to delete from Supabase
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", id);
-      
-      if (error) {
-        console.warn("Deleting from local storage due to Supabase error:", error);
-        // Fall back to local storage
-        return this.deleteLocalTransaction(id);
-      }
-      
-      // Also delete from local storage to keep in sync
-      this.deleteLocalTransaction(id);
-      return true;
-    } catch (err) {
-      console.warn("Deleting from local storage due to exception:", err);
-      // Fall back to local storage
-      return this.deleteLocalTransaction(id);
-    }
+    // MOCK: Use local storage as mock database
+    return this.deleteLocalTransaction(id);
   },
-
+  
   // Delete a transaction from local storage
   deleteLocalTransaction(id: string): boolean {
     const transactions = getLocalTransactions();
@@ -371,7 +254,16 @@ export const transactionService = {
     saveLocalTransactions(filteredTransactions);
     return true;
   },
-
+  
+  // Export transactions to CSV
+  async exportTransactions(
+    userId: string,
+    filters: TransactionFilters = {}
+  ): Promise<string> {
+    const transactions = await this.getTransactions(userId, filters);
+    return exportTransactionsAsCSV(transactions);
+  },
+  
   // Get transaction summary (for dashboard)
   async getTransactionSummary(userId: string, period: string = "month") {
     const now = new Date();
@@ -414,42 +306,23 @@ export const transactionService = {
         return acc;
       }, {} as Record<string, number>);
     
+    // Group expenses by budget_id
+    const expensesByBudget = transactions
+      .filter(t => t.type === "expense" && t.budget_id)
+      .reduce((acc, t) => {
+        if (t.budget_id) {
+          acc[t.budget_id] = (acc[t.budget_id] || 0) + t.amount;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+    
     return {
       totalIncome,
       totalExpense,
       balance: totalIncome - totalExpense,
       expensesByCategory,
+      expensesByBudget,
       transactions
     };
-  },
-
-  // Export transactions to CSV format
-  async exportTransactionsCSV(userId: string, options?: { 
-    startDate?: string; 
-    endDate?: string;
-    category?: string;
-    type?: string;
-  }) {
-    const transactions = await this.getTransactions(userId, options);
-    
-    // Create CSV headers
-    const headers = ["Date", "Type", "Category", "Amount", "Description"];
-    
-    // Create CSV rows
-    const rows = transactions.map(t => [
-      t.date,
-      t.type,
-      t.category,
-      t.amount.toString(),
-      t.description || ""
-    ]);
-    
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.join(","))
-    ].join("\n");
-    
-    return csvContent;
   }
 }; 

@@ -6,6 +6,7 @@ import { CalendarIcon, Plus, Minus } from "lucide-react";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from "@/lib/providers/auth-provider";
+import { useBudgets } from "@/hooks/use-budgets";
 
 import {
   Form,
@@ -33,6 +34,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { Transaction, getUserDefaultAccount } from "@/lib/services/transaction-service";
 
@@ -41,10 +43,12 @@ const transactionFormSchema = z.object({
   type: z.enum(["income", "expense"]),
   amount: z.string().min(1, "Amount is required"),
   category: z.string().min(1, "Category is required"),
+  budget_id: z.string().optional(),
   date: z.date({
     required_error: "Date is required",
   }),
   description: z.string().optional(),
+  apply_to_budget: z.boolean().default(true)
 });
 
 // Type for the form data
@@ -55,8 +59,10 @@ const defaultValues: Partial<TransactionFormValues> = {
   type: "expense",
   amount: "",
   category: "",
+  budget_id: "",
   date: new Date(),
   description: "",
+  apply_to_budget: true
 };
 
 // Category options based on type
@@ -89,6 +95,8 @@ interface TransactionFormProps {
   onCancel?: () => void;
   initialData?: Partial<Transaction>;
   userId?: string;
+  preselectedBudgetId?: string;
+  preselectedCategory?: string;
 }
 
 export function TransactionForm({ 
@@ -96,11 +104,16 @@ export function TransactionForm({
   onSave,
   onCancel,
   initialData,
-  userId: providedUserId 
+  userId: providedUserId, 
+  preselectedBudgetId,
+  preselectedCategory
 }: TransactionFormProps) {
   const { user } = useAuth();
   const userId = providedUserId || user?.id || 'guest-user';
   const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null);
+  
+  // Fetch user's budgets for selection
+  const { budgets, loading: budgetsLoading } = useBudgets(userId);
   
   // Fetch user's default account ID
   useEffect(() => {
@@ -118,14 +131,28 @@ export function TransactionForm({
     defaultValues: {
       type: initialData?.type as "income" | "expense" || defaultValues.type,
       amount: initialData?.amount ? String(initialData.amount) : defaultValues.amount,
-      category: initialData?.category || defaultValues.category,
+      category: initialData?.category || preselectedCategory || defaultValues.category,
+      budget_id: initialData?.budget_id || preselectedBudgetId || defaultValues.budget_id,
       date: initialData?.date ? new Date(initialData.date) : defaultValues.date,
       description: initialData?.description || defaultValues.description,
+      apply_to_budget: initialData?.budget_id ? true : defaultValues.apply_to_budget
     },
   });
 
   // Get the current transaction type to update category options
   const transactionType = form.watch("type");
+  const selectedCategory = form.watch("category");
+  const applyToBudget = form.watch("apply_to_budget");
+  
+  // Auto-select budget based on category if available
+  useEffect(() => {
+    if (selectedCategory && applyToBudget && !form.getValues("budget_id")) {
+      const matchingBudget = budgets.find(b => b.category === selectedCategory);
+      if (matchingBudget) {
+        form.setValue("budget_id", matchingBudget.id as string);
+      }
+    }
+  }, [selectedCategory, budgets, applyToBudget, form]);
 
   // Submit handler
   function handleSubmit(data: TransactionFormValues) {
@@ -135,6 +162,7 @@ export function TransactionForm({
       type: data.type,
       amount: parseFloat(data.amount),
       category: data.category,
+      budget_id: data.apply_to_budget ? data.budget_id : undefined,
       date: data.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
       description: data.description || null,
       account_id: defaultAccountId || uuidv4(), // Use the fetched account ID or generate a UUID
@@ -236,6 +264,69 @@ export function TransactionForm({
             </FormItem>
           )}
         />
+
+        {/* Apply to Budget Checkbox */}
+        {transactionType === "expense" && (
+          <FormField
+            control={form.control}
+            name="apply_to_budget"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Apply to Budget
+                  </FormLabel>
+                  <FormDescription>
+                    Track this expense against a budget category
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* Budget Selection - Only show if apply_to_budget is checked */}
+        {transactionType === "expense" && applyToBudget && (
+          <FormField
+            control={form.control}
+            name="budget_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Select Budget</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a budget" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {budgetsLoading ? (
+                      <SelectItem value="loading">Loading budgets...</SelectItem>
+                    ) : budgets.length === 0 ? (
+                      <SelectItem value="none">No budgets found</SelectItem>
+                    ) : (
+                      budgets.map((budget) => (
+                        <SelectItem 
+                          key={budget.id} 
+                          value={budget.id as string}
+                        >
+                          {budget.category} (${budget.amount})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* Date */}
         <FormField
