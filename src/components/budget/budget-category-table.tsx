@@ -1,18 +1,24 @@
-import { useState, useEffect } from "react";
-import { Edit, ArrowUpRight, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+  MoreHorizontal, 
+  Edit2, 
+  Trash2, 
+  Plus,
+  CheckCircle2,
+  AlertTriangle,
+  AlertCircle
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useBudgets } from "@/hooks/use-budgets";
-import { BudgetForm } from "./budget-form";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -20,212 +26,256 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useBudgets } from "@/hooks/use-budgets";
+import { BudgetForm } from "@/components/budget/budget-form";
+import { useAuth } from "@/lib/providers/auth-provider";
 
-// Mock data for budget categories
-const mockCategories = [
-  {
-    id: 1,
-    name: "Entertainment",
-    monthlyLimit: 48.00,
-    spentToday: 28.00,
-    remaining: 25.00,
-    status: "On Track",
-  },
-  {
-    id: 2,
-    name: "Transportation",
-    monthlyLimit: 25.00,
-    spentToday: 15.00,
-    remaining: 10.00,
-    status: "Near Limit",
-  },
-  {
-    id: 3,
-    name: "Groceries",
-    monthlyLimit: 150.00,
-    spentToday: 67.50,
-    remaining: 82.50,
-    status: "On Track",
-  },
-  {
-    id: 4,
-    name: "Dining Out",
-    monthlyLimit: 60.00,
-    spentToday: 65.00,
-    remaining: -5.00,
-    status: "Over Budget",
-  },
-];
-
-// TODO: Connect to backend endpoint: GET /api/budget/categories
-
-interface BudgetCategoryTableProps {
-  className?: string;
-  userId?: string;
-}
-
-export function BudgetCategoryTable({ className, userId = "current-user-id" }: BudgetCategoryTableProps) {
+export function BudgetCategoryTable() {
   const [addBudgetOpen, setAddBudgetOpen] = useState(false);
-  const [editBudgetId, setEditBudgetId] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  // Use our budgets hook
+  const [editBudgetData, setEditBudgetData] = useState<any>(null);
+  const [deleteBudgetId, setDeleteBudgetId] = useState<string | null>(null);
+  
+  // Get the current user ID from auth
+  const { user } = useAuth();
+  const userId = user?.id || 'guest-user';
+  
+  // Use our budgets hook to manage budgets
   const {
     budgetStatus,
     loading,
-    actions: { createBudget, updateBudget, refreshBudgets }
+    actions: { createBudget, updateBudget, deleteBudget }
   } = useBudgets(userId);
-
-  // Get budget status for status badge
-  const getBudgetStatus = (progress: number) => {
-    if (progress >= 100) return "Over Budget";
-    if (progress >= 80) return "Near Limit";
-    return "On Track";
+  
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
   };
-
-  // Get status badge variant based on status
-  const getStatusBadgeVariant = (status: string) => {
+  
+  // Helper to get status icon
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case "On Track":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case "Near Limit":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case "Over Budget":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+      case 'ok':
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      case 'warning':
+        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+      case 'exceeded':
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400";
+        return <CheckCircle2 className="h-5 w-5 text-gray-300" />;
     }
   };
-
-  // Handle budget saving
-  const handleSaveBudget = async (data: any) => {
-    if (editBudgetId) {
-      // Update existing budget
-      await updateBudget(editBudgetId, data);
-      setEditBudgetId(null);
-    } else {
-      // Create new budget
-      await createBudget(data);
+  
+  // Helper to get progress color
+  const getProgressColor = (status: string) => {
+    switch (status) {
+      case 'ok':
+        return 'bg-green-500';
+      case 'warning':
+        return 'bg-amber-500';
+      case 'exceeded':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
     }
+  };
+  
+  // Handler for adding a new budget
+  const handleAddBudget = async (data: any) => {
+    await createBudget(data);
     setAddBudgetOpen(false);
-    refreshBudgets();
   };
-
-  // Get budget by ID
-  const getBudgetById = (id: string) => {
-    return budgetStatus.find(budget => budget.id === id);
+  
+  // Handler for editing a budget
+  const handleEditBudget = async (data: any) => {
+    if (editBudgetData) {
+      await updateBudget(editBudgetData.id, data);
+      setEditBudgetData(null);
+    }
   };
-
-  // Edit a budget
-  const editBudget = (id: string) => {
-    setEditBudgetId(id);
-    setAddBudgetOpen(true);
+  
+  // Handler for deleting a budget
+  const handleDeleteBudget = async () => {
+    if (deleteBudgetId) {
+      await deleteBudget(deleteBudgetId);
+      setDeleteBudgetId(null);
+    }
+  };
+  
+  // Get the budget to edit by ID
+  const getBudgetToEdit = (id: string) => {
+    const budget = budgetStatus.find(b => b.id === id);
+    return budget ? {
+      category: budget.category,
+      amount: budget.budgeted.toString(),
+      period: budget.period || 'monthly'
+    } : null;
   };
 
   return (
-    <>
-      <Card className={cn("rounded-xl border-[#E0E0E0] shadow-sm", className)}>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-[#212B36]">Budget Categories</CardTitle>
-          <div className="flex items-center gap-2">
+    <Card className="rounded-xl border-[#E0E0E0] shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-lg font-semibold text-[#212B36]">
+          Budget Categories
+        </CardTitle>
+        <Button 
+          onClick={() => setAddBudgetOpen(true)}
+          className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white"
+          size="sm"
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Add Budget
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4E60FF]"></div>
+          </div>
+        ) : budgetStatus.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">No budgets set yet</p>
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-1 rounded-md text-[#637381]"
               onClick={() => setAddBudgetOpen(true)}
+              variant="outline"
             >
-              <Plus className="h-4 w-4" />
-              Add Budget
+              <Plus className="h-4 w-4 mr-1" />
+              Create Your First Budget
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4E60FF]"></div>
+        ) : (
+          <div className="space-y-4">
+            {budgetStatus.map((budget) => (
+              <div key={budget.id} className="border rounded-lg p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="flex items-center gap-1">
+                      {getStatusIcon(budget.status)}
+                      <h3 className="text-md font-medium capitalize">{budget.category}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Budget: {formatCurrency(budget.budgeted)}
+                    </p>
+                  </div>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setEditBudgetData({ id: budget.id, ...getBudgetToEdit(budget.id) })}>
+                        <Edit2 className="mr-2 h-4 w-4" />
+                        Edit Budget
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => setDeleteBudgetId(budget.id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Budget
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                
+                <div className="mt-3">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Spent: {formatCurrency(budget.spent)}</span>
+                    <span>Remaining: {formatCurrency(budget.remaining)}</span>
+                  </div>
+                  <Progress 
+                    value={Math.min(budget.progress, 100)} 
+                    className="h-2"
+                    indicatorClassName={getProgressColor(budget.status)} 
+                  />
+                  <div className="text-right text-xs mt-1 text-muted-foreground">
+                    {budget.progress.toFixed(0)}% of budget
+                  </div>
+                </div>
               </div>
-            ) : budgetStatus.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">You haven't set any budget limits yet</p>
-                <Button 
-                  onClick={() => setAddBudgetOpen(true)}
-                  className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white"
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  Create Your First Budget
-                </Button>
-              </div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="text-xs text-left text-[#637381] border-b border-[#E0E0E0]">
-                    <th className="font-medium py-3 px-2">Category</th>
-                    <th className="font-medium py-3 px-2">Monthly Limit</th>
-                    <th className="font-medium py-3 px-2">Spent</th>
-                    <th className="font-medium py-3 px-2">Remaining</th>
-                    <th className="font-medium py-3 px-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {budgetStatus.map((budget) => (
-                    <tr 
-                      key={budget.id} 
-                      className="border-b border-[#E0E0E0] last:border-b-0 hover:bg-[#F9FAFB] cursor-pointer"
-                      onClick={() => editBudget(budget.id)}
-                    >
-                      <td className="py-3 px-2 text-[#212B36] font-medium">{budget.category}</td>
-                      <td className="py-3 px-2 text-[#212B36]">${budget.amount.toFixed(2)}</td>
-                      <td className="py-3 px-2 text-[#212B36]">${budget.spent.toFixed(2)}</td>
-                      <td className="py-3 px-2 text-[#212B36]">
-                        ${Math.abs(budget.remaining).toFixed(2)}
-                        {budget.remaining < 0 && <span className="text-red-500"> (overspent)</span>}
-                      </td>
-                      <td className="py-3 px-2">
-                        <Badge 
-                          variant="outline" 
-                          className={getStatusBadgeVariant(getBudgetStatus(budget.progress))}
-                        >
-                          {getBudgetStatus(budget.progress)}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+            ))}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Add/Edit Budget Dialog */}
-      <Dialog 
-        open={addBudgetOpen} 
-        onOpenChange={(open) => {
-          setAddBudgetOpen(open);
-          if (!open) setEditBudgetId(null);
-        }}
-      >
+        )}
+      </CardContent>
+      
+      {/* Add Budget Dialog */}
+      <Dialog open={addBudgetOpen} onOpenChange={setAddBudgetOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
-            <DialogTitle>{editBudgetId ? "Edit Budget" : "Add Budget"}</DialogTitle>
+            <DialogTitle>Add Budget</DialogTitle>
             <DialogDescription>
-              {editBudgetId 
-                ? "Update your monthly spending limit for this category" 
-                : "Set a monthly spending limit for a category"}
+              Set a spending limit for a category
             </DialogDescription>
           </DialogHeader>
           <BudgetForm 
-            onSave={handleSaveBudget}
-            onCancel={() => {
-              setAddBudgetOpen(false);
-              setEditBudgetId(null);
-            }}
-            initialValues={editBudgetId ? getBudgetById(editBudgetId) : undefined}
-            userId={userId}
+            onSave={handleAddBudget}
+            onCancel={() => setAddBudgetOpen(false)}
           />
         </DialogContent>
       </Dialog>
-    </>
+      
+      {/* Edit Budget Dialog */}
+      <Dialog 
+        open={editBudgetData !== null} 
+        onOpenChange={(open) => !open && setEditBudgetData(null)}
+      >
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Edit Budget</DialogTitle>
+            <DialogDescription>
+              Update your budget for this category
+            </DialogDescription>
+          </DialogHeader>
+          {editBudgetData && (
+            <BudgetForm 
+              initialValues={editBudgetData}
+              onSave={handleEditBudget}
+              onCancel={() => setEditBudgetData(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog 
+        open={deleteBudgetId !== null}
+        onOpenChange={(open) => !open && setDeleteBudgetId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Budget</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this budget? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteBudget}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 }

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, Plus, Minus } from "lucide-react";
 import { format } from "date-fns";
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   Form,
@@ -32,6 +33,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { Transaction, getUserDefaultAccount } from "@/lib/services/transaction-service";
 
 // Form schema using zod
 const transactionFormSchema = z.object({
@@ -81,18 +83,34 @@ const categoryOptions = {
 };
 
 interface TransactionFormProps {
-  onSave: (data: TransactionFormValues) => void;
+  onSave: (data: Transaction) => void;
   onCancel: () => void;
-  initialDate?: Date;
+  initialData?: Partial<Transaction>;
+  userId: string;
 }
 
-export function TransactionForm({ onSave, onCancel, initialDate }: TransactionFormProps) {
+export function TransactionForm({ onSave, onCancel, initialData, userId }: TransactionFormProps) {
+  const [defaultAccountId, setDefaultAccountId] = useState<string | null>(null);
+  
+  // Fetch user's default account ID
+  useEffect(() => {
+    const fetchAccountId = async () => {
+      const accountId = await getUserDefaultAccount(userId);
+      setDefaultAccountId(accountId);
+    };
+    
+    fetchAccountId();
+  }, [userId]);
+  
   // Initialize the form with initial values
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-      ...defaultValues,
-      date: initialDate || new Date(),
+      type: initialData?.type as "income" | "expense" || defaultValues.type,
+      amount: initialData?.amount ? String(initialData.amount) : defaultValues.amount,
+      category: initialData?.category || defaultValues.category,
+      date: initialData?.date ? new Date(initialData.date) : defaultValues.date,
+      description: initialData?.description || defaultValues.description,
     },
   });
 
@@ -102,15 +120,18 @@ export function TransactionForm({ onSave, onCancel, initialDate }: TransactionFo
   // Submit handler
   function onSubmit(data: TransactionFormValues) {
     // Convert amount string to number for API
-    const processedData = {
-      ...data,
+    const transaction: Transaction = {
+      user_id: userId,
+      type: data.type,
       amount: parseFloat(data.amount),
+      category: data.category,
+      date: data.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      description: data.description || null,
+      account_id: defaultAccountId || uuidv4(), // Use the fetched account ID or generate a UUID
     };
     
-    console.log("Submitting transaction:", processedData);
-    // TODO: Connect to backend endpoint: POST /api/transactions/add
-    
-    onSave(data);
+    console.log("Submitting transaction:", transaction);
+    onSave(transaction);
   }
 
   return (
@@ -250,9 +271,9 @@ export function TransactionForm({ onSave, onCancel, initialDate }: TransactionFo
               <FormLabel>Description (Optional)</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Add more details about this transaction"
-                  className="resize-none"
+                  placeholder="Enter a brief description"
                   {...field}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />
@@ -261,12 +282,16 @@ export function TransactionForm({ onSave, onCancel, initialDate }: TransactionFo
         />
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" type="button" onClick={onCancel}>
+        <div className="flex justify-end space-x-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+          >
             Cancel
           </Button>
           <Button 
-            type="submit" 
+            type="submit"
             className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white"
           >
             Save Transaction

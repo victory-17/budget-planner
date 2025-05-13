@@ -29,9 +29,10 @@ import {
 interface TopNavigationProps {
   title: string;
   subtitle?: string;
+  action?: React.ReactNode;
 }
 
-export function TopNavigation({ title, subtitle }: TopNavigationProps) {
+export function TopNavigation({ title, subtitle, action }: TopNavigationProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -50,8 +51,8 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
     // TODO: Connect to backend endpoint: GET /api/export
   };
 
-  const addPayment = () => {
-    navigate("/transactions/new");
+  const addTransaction = () => {
+    navigate("/transactions", { state: { openAddTransaction: true } });
   };
   
   // Safely get user display name from metadata or use email as fallback
@@ -119,11 +120,13 @@ export function TopNavigation({ title, subtitle }: TopNavigationProps) {
               Export
             </Button>
 
-            {/* Add Payment Button */}
-            <Button onClick={addPayment} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Payment
-            </Button>
+            {/* Custom Action or Default Add Transaction Button */}
+            {action || (
+              <Button onClick={addTransaction} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Transaction
+              </Button>
+            )}
 
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="rounded-full">

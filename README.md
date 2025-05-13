@@ -9,7 +9,7 @@ Follow these steps:
 git clone https://github.com/victory-17/budget-tracker-client/
 
 # Step 2: Navigate to the project directory.
-cd budget-tracker-client
+cd budget-tracker-full
 
 # Step 3: Install the necessary dependencies.
 npm install
@@ -26,4 +26,5 @@ npm run dev
 - React
 - shadcn-ui
 - Tailwind CSS
+- supabase
 

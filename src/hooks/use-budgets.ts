@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Budget, BudgetWithId, budgetService } from "@/lib/services/budget-service";
 import { useToast } from "@/hooks/use-toast";
 
-export function useBudgets(userId: string, period: string = "month") {
+export function useBudgets(userId: string, period: string = "monthly") {
   const [budgets, setBudgets] = useState<BudgetWithId[]>([]);
   const [budgetStatus, setBudgetStatus] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [summary, setSummary] = useState<{ totalBudgeted: number; totalSpent: number }>({ totalBudgeted: 0, totalSpent: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
@@ -17,17 +18,15 @@ export function useBudgets(userId: string, period: string = "month") {
     
     setLoading(true);
     try {
+      // Get raw budgets
       const data = await budgetService.getBudgets(userId, period);
       setBudgets(data as BudgetWithId[]);
       
-      // Get budget status with spending progress
+      // Get budget status with spending progress, alerts, and summary
       const status = await budgetService.getBudgetStatus(userId, period);
-      setBudgetStatus(status);
-      
-      // Get budget alerts
-      const alertData = await budgetService.getBudgetAlerts(userId, period);
-      setAlerts(alertData);
-      
+      setBudgetStatus(status.budgets);
+      setAlerts(status.alerts);
+      setSummary(status.summary);
     } catch (err: any) {
       setError(err);
       toast({
@@ -137,8 +136,8 @@ export function useBudgets(userId: string, period: string = "month") {
 
   // Change period (month, year, etc.)
   const changePeriod = (newPeriod: string) => {
-    // Update and trigger a refetch
-    return period = newPeriod;
+    // Return a new period without directly mutating the parameter
+    return newPeriod;
   };
 
   // Load budgets when period changes
@@ -150,6 +149,7 @@ export function useBudgets(userId: string, period: string = "month") {
     budgets,
     budgetStatus,
     alerts,
+    summary,
     loading,
     error,
     period,

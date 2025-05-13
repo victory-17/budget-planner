@@ -1,63 +1,70 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-
-interface SavingEntry {
-  id: string;
-  bankName: string;
-  date: string;
-  amount: number;
-}
-
-const mockSavings: SavingEntry[] = [
-  {
-    id: "1",
-    bankName: "Bank Jago",
-    date: "12 Mar 2024",
-    amount: 645.00
-  },
-  {
-    id: "2",
-    bankName: "Jenius",
-    date: "13 Mar 2024",
-    amount: 445.00
-  }
-];
-
-// TODO: Connect to backend endpoint: GET /api/savings
+import { Progress } from "@/components/ui/progress";
+import { PiggyBank } from "lucide-react";
 
 interface SavingsBudgetProps {
-  className?: string;
+  data?: any[];
+  loading?: boolean;
 }
 
-export function SavingsBudget({ className }: SavingsBudgetProps) {
+export function SavingsBudget({ data = [], loading = false }: SavingsBudgetProps) {
+  // Calculate totals with safety checks
+  const totalBudgeted = data.reduce((sum, budget) => 
+    sum + (budget && typeof budget.budgeted === 'number' ? budget.budgeted : 0), 0);
+  
+  const totalSpent = data.reduce((sum, budget) => 
+    sum + (budget && typeof budget.spent === 'number' ? budget.spent : 0), 0);
+  
+  const remaining = totalBudgeted - totalSpent;
+  const progress = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
+  
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
   return (
-    <Card className={cn("rounded-xl border-[#E0E0E0] shadow-sm", className)}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-[#212B36]">Savings Budget</CardTitle>
-        <Button variant="ghost" size="icon" className="hover:bg-[#F9FAFB]">
-          <Plus className="h-4 w-4 text-[#4E60FF]" />
-        </Button>
+    <Card className="rounded-xl border-[#E0E0E0] shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold text-[#212B36] flex items-center">
+          <PiggyBank className="mr-2 h-5 w-5 text-[#4E60FF]" />
+          Budget Status
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {mockSavings.map((saving) => (
-          <div key={saving.id} className="flex items-center justify-between p-4 border border-[#E0E0E0] rounded-lg hover:shadow-sm transition-shadow">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 bg-[#4E60FF]/10">
-                <AvatarFallback className="bg-[#4E60FF]/10 text-[#4E60FF]">{saving.bankName[0]}</AvatarFallback>
-              </Avatar>
+      <CardContent>
+        {loading ? (
+          <div className="h-24 flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4E60FF]"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="font-medium text-[#212B36]">{saving.bankName}</p>
-                <p className="text-xs text-[#637381]">{saving.date}</p>
+                <p className="text-sm text-muted-foreground">Total Budget</p>
+                <p className="text-xl font-bold text-[#212B36]">{formatCurrency(totalBudgeted)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Spent</p>
+                <p className="text-xl font-bold text-red-500">{formatCurrency(totalSpent)}</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="font-semibold text-[#00C896]">+${saving.amount.toFixed(2)}</p>
+            
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span>Remaining: {formatCurrency(remaining)}</span>
+                <span>{progress.toFixed(0)}% used</span>
+              </div>
+              <Progress 
+                value={Math.min(progress, 100)} 
+                className="h-2"
+                indicatorClassName={progress >= 100 ? "bg-red-500" : progress >= 80 ? "bg-amber-500" : "bg-green-500"}
+              />
             </div>
           </div>
-        ))}
+        )}
       </CardContent>
     </Card>
   );

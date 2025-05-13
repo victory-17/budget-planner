@@ -22,6 +22,20 @@ import {
 } from "@/components/ui/select";
 import { useCategories } from "@/hooks/use-categories";
 
+// Common expense categories to provide as options
+const commonCategories = [
+  { id: "groceries", name: "Groceries" },
+  { id: "dining", name: "Dining" },
+  { id: "transportation", name: "Transportation" },
+  { id: "utilities", name: "Utilities" },
+  { id: "entertainment", name: "Entertainment" },
+  { id: "shopping", name: "Shopping" },
+  { id: "home", name: "Home" },
+  { id: "health", name: "Health" },
+  { id: "education", name: "Education" },
+  { id: "other", name: "Other" },
+];
+
 // Form schema using zod
 const budgetFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
@@ -31,7 +45,7 @@ const budgetFormSchema = z.object({
       message: "Amount must be a positive number",
     }
   ),
-  period: z.enum(["month", "year"]).default("month"),
+  period: z.enum(["monthly", "quarterly", "yearly"]).default("monthly"),
 });
 
 // Type for the form data
@@ -41,18 +55,18 @@ type BudgetFormValues = z.infer<typeof budgetFormSchema>;
 const defaultValues: Partial<BudgetFormValues> = {
   category: "",
   amount: "",
-  period: "month",
+  period: "monthly",
 };
 
 interface BudgetFormProps {
-  onSave: (data: BudgetFormValues) => void;
+  onSave: (data: any) => void;
   onCancel: () => void;
   initialValues?: Partial<BudgetFormValues>;
   userId: string;
 }
 
 export function BudgetForm({ onSave, onCancel, initialValues, userId }: BudgetFormProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [customCategory, setCustomCategory] = useState(false);
   
   // Initialize the form with initial values or defaults
   const form = useForm<BudgetFormValues>({
@@ -67,12 +81,12 @@ export function BudgetForm({ onSave, onCancel, initialValues, userId }: BudgetFo
   useEffect(() => {
     if (initialValues) {
       Object.entries(initialValues).forEach(([key, value]) => {
-        form.setValue(key as keyof BudgetFormValues, value);
+        form.setValue(key as keyof BudgetFormValues, value as any);
       });
       
-      if (initialValues.category) {
-        setSelectedCategory(initialValues.category);
-      }
+      // Check if it's a custom category
+      const isCustom = !commonCategories.some(cat => cat.id === initialValues.category);
+      setCustomCategory(isCustom);
     }
   }, [form, initialValues]);
 
@@ -87,6 +101,14 @@ export function BudgetForm({ onSave, onCancel, initialValues, userId }: BudgetFo
     onSave(processedData);
   }
 
+  // Toggle between predefined and custom category
+  const toggleCustomCategory = () => {
+    setCustomCategory(!customCategory);
+    if (!customCategory) {
+      form.setValue('category', '');
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -96,38 +118,59 @@ export function BudgetForm({ onSave, onCancel, initialValues, userId }: BudgetFo
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Expense Category</FormLabel>
-              <Select 
-                disabled={loading}
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  setSelectedCategory(value);
-                }}
-                defaultValue={field.value}
-              >
+              <FormLabel className="flex justify-between">
+                <span>Expense Category</span>
+                <Button 
+                  type="button" 
+                  variant="link" 
+                  className="p-0 h-auto text-xs"
+                  onClick={toggleCustomCategory}
+                >
+                  {customCategory ? "Use predefined category" : "Add custom category"}
+                </Button>
+              </FormLabel>
+              
+              {customCategory ? (
+                // Custom category input
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
+                  <Input
+                    placeholder="Enter category name"
+                    {...field}
+                  />
                 </FormControl>
-                <SelectContent>
-                  {loading ? (
-                    <SelectItem value="loading" disabled>
-                      Loading categories...
-                    </SelectItem>
-                  ) : expenseCategories.length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      No categories available
-                    </SelectItem>
-                  ) : (
-                    expenseCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
+              ) : (
+                // Predefined categories dropdown
+                <Select 
+                  disabled={loading}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                  }}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {loading ? (
+                      <SelectItem value="loading" disabled>
+                        Loading categories...
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    ) : expenseCategories.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        No categories available
+                      </SelectItem>
+                    ) : (
+                      expenseCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -175,8 +218,9 @@ export function BudgetForm({ onSave, onCancel, initialValues, userId }: BudgetFo
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="month">Monthly</SelectItem>
-                  <SelectItem value="year">Yearly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -186,14 +230,18 @@ export function BudgetForm({ onSave, onCancel, initialValues, userId }: BudgetFo
 
         {/* Form Actions */}
         <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" type="button" onClick={onCancel}>
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={onCancel}
+          >
             Cancel
           </Button>
           <Button 
-            type="submit" 
+            type="submit"
             className="bg-[#4E60FF] hover:bg-[#4E60FF]/90 text-white"
           >
-            {initialValues ? "Update Budget" : "Set Budget"}
+            Save Budget
           </Button>
         </div>
       </form>

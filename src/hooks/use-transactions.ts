@@ -44,22 +44,42 @@ export function useTransactions(userId: string, options: UseTransactionsOptions 
       
       setTransactions(data as TransactionWithId[]);
       
-      // Get total count for pagination
-      const { count } = await supabase
-        .from("transactions")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId);
+      // Get total count for pagination - wrap in try/catch to handle Supabase unavailability
+      try {
+        const { count, error } = await supabase
+          .from("transactions")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId);
+        
+        if (!error && count !== null) {
+          setPagination(prev => ({
+            ...prev,
+            total: count
+          }));
+        } else {
+          // If Supabase count fails, estimate based on local data
+          const localTotal = data.length;
+          setPagination(prev => ({
+            ...prev,
+            total: Math.max(localTotal, prev.total)
+          }));
+        }
+      } catch (countErr) {
+        console.warn("Could not get count from Supabase:", countErr);
+        // Use local length as fallback
+        const localTotal = data.length;
+        setPagination(prev => ({
+          ...prev,
+          total: Math.max(localTotal, prev.total)
+        }));
+      }
       
-      setPagination(prev => ({
-        ...prev,
-        total: count || 0
-      }));
-      
-    } catch (err: any) {
-      setError(err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error);
       toast({
         title: "Error",
-        description: `Failed to load transactions: ${err.message}`,
+        description: `Failed to load transactions: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -71,6 +91,7 @@ export function useTransactions(userId: string, options: UseTransactionsOptions 
   const createTransaction = async (transaction: Transaction) => {
     setLoading(true);
     try {
+      // The transaction service will handle getting/creating the account and saving to Supabase
       const newTransaction = await transactionService.createTransaction({
         ...transaction,
         user_id: userId
@@ -83,14 +104,15 @@ export function useTransactions(userId: string, options: UseTransactionsOptions 
       });
       
       return newTransaction;
-    } catch (err: any) {
-      setError(err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error);
       toast({
         title: "Error",
-        description: `Failed to create transaction: ${err.message}`,
+        description: `Failed to create transaction: ${error.message}`,
         variant: "destructive"
       });
-      throw err;
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -100,6 +122,7 @@ export function useTransactions(userId: string, options: UseTransactionsOptions 
   const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
     setLoading(true);
     try {
+      // Let the transaction service handle preserving or setting account_id
       const updatedTransaction = await transactionService.updateTransaction(id, updates);
       
       setTransactions(prev => 
@@ -112,14 +135,15 @@ export function useTransactions(userId: string, options: UseTransactionsOptions 
       });
       
       return updatedTransaction;
-    } catch (err: any) {
-      setError(err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error);
       toast({
         title: "Error",
-        description: `Failed to update transaction: ${err.message}`,
+        description: `Failed to update transaction: ${error.message}`,
         variant: "destructive"
       });
-      throw err;
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -139,14 +163,15 @@ export function useTransactions(userId: string, options: UseTransactionsOptions 
       });
       
       return true;
-    } catch (err: any) {
-      setError(err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error);
       toast({
         title: "Error",
-        description: `Failed to delete transaction: ${err.message}`,
+        description: `Failed to delete transaction: ${error.message}`,
         variant: "destructive"
       });
-      throw err;
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -192,10 +217,11 @@ export function useTransactions(userId: string, options: UseTransactionsOptions 
           description: "PDF export will be available soon",
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       toast({
         title: "Error",
-        description: `Failed to export transactions: ${err.message}`,
+        description: `Failed to export transactions: ${error.message}`,
         variant: "destructive"
       });
     }

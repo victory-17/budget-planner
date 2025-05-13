@@ -150,9 +150,7 @@ const Help = () => {
                           <span className="flex items-center justify-center w-6 h-6 bg-[#4E60FF] text-white rounded-full text-sm">4</span>
                           Record Transactions
                         </h4>
-                        <p className="text-[#637381] ml-8">
-                          Use the "Add Payment" button in the top navigation to record your expenses and income. Categorize each transaction and add notes if needed.
-                        </p>
+                                                <p className="text-[#637381] ml-8">                          Use the "Add Transaction" button in the top navigation to record your expenses and income. Categorize each transaction and add notes if needed.                        </p>
                       </div>
                       
                       <div className="p-4 border border-[#E0E0E0] rounded-lg">
@@ -200,7 +198,7 @@ const Help = () => {
                         <AccordionContent className="text-[#637381]">
                           <p className="mb-2">To manage your transactions effectively:</p>
                           <ul className="list-disc pl-5 space-y-1">
-                            <li>Click the <strong>"Add Payment"</strong> button in the top navigation</li>
+                            <li>Click the <strong>"Add Transaction"</strong> button in the top navigation</li>
                             <li>Select transaction type (Income or Expense)</li>
                             <li>Enter the amount and select a category</li>
                             <li>Add a description and date</li>

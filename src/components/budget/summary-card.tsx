@@ -7,9 +7,17 @@ interface SummaryCardProps {
   icon: React.ReactNode;
   iconBgColor?: string;
   className?: string;
+  subtitle?: string;
 }
 
-export function SummaryCard({ title, amount, icon, iconBgColor, className }: SummaryCardProps) {
+export function SummaryCard({ 
+  title, 
+  amount, 
+  icon, 
+  iconBgColor, 
+  className, 
+  subtitle = "Budget" 
+}: SummaryCardProps) {
   return (
     <Card className={cn("overflow-hidden rounded-xl border-[#E0E0E0] shadow-sm", className)}>
       <CardContent className="p-6">
@@ -25,7 +33,7 @@ export function SummaryCard({ title, amount, icon, iconBgColor, className }: Sum
           <p className="text-2xl font-bold text-[#212B36]">
             ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
-          <p className="text-sm text-[#637381] mt-1">Budget</p>
+          <p className="text-sm text-[#637381] mt-1">{subtitle}</p>
         </div>
       </CardContent>
     </Card>
