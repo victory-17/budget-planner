@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Define consistent colors
+// Define more subdued colors
 const COLORS = {
-  groceries: "#00C896", // Vibrant green
-  shopping: "#4E60FF", // Vibrant blue
-  homeNeeds: "#FF8F00", // Vibrant amber/orange
-  leisure: "#E91E63", // Vibrant pink
+  groceries: "#4CAF50", // Softer green
+  shopping: "#2196F3", // Softer blue
+  homeNeeds: "#FFC107", // Softer yellow/amber
+  leisure: "#9C27B0", // Softer purple
 };
 
 // Mock data for the charts
